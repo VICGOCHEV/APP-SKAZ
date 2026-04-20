@@ -1,0 +1,14 @@
+export const queryKeys = {
+  dishes: ['dishes'] as const,
+  dish: (id: string) => ['dishes', id] as const,
+  dishesByCategory: (categoryId: string) => ['dishes', 'category', categoryId] as const,
+  dishesSearch: (query: string) => ['dishes', 'search', query] as const,
+  categories: ['categories'] as const,
+  cuisines: ['cuisines'] as const,
+  stories: ['stories'] as const,
+  banners: ['banners'] as const,
+  promos: ['promos'] as const,
+  promo: (id: string) => ['promos', id] as const,
+  order: (id: string) => ['orders', id] as const,
+  orderHistory: ['orders', 'history'] as const,
+};

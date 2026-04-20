@@ -1,0 +1,1268 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>Сказка Востока — Design System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alice&family=Roboto+Flex:opsz,wght@8..144,300..900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Brand — скатерть-самобранка */
+    --cream:       #F1E4CE;  /* base tablecloth */
+    --cream-soft:  #F8EFDE;  /* lighter cream */
+    --cream-deep:  #E8D7B8;  /* shadowed cream */
+    --sand:        #CFA968;  /* gold thread */
+    --sand-deep:   #A98647;
+
+    --crimson:     #B72336;  /* bright red */
+    --wine:        #8A1B26;  /* deep red */
+    --burgundy:    #5A1014;  /* dark red */
+
+    --mint:        #5C8A5A;  /* fresh green */
+    --forest:      #1F4A2A;  /* deep green */
+    --pine:        #0E2E1A;  /* dark green */
+
+    --indigo:      #3D3F6E;  /* dusty indigo */
+    --midnight:    #1A1B45;  /* deep indigo */
+
+    /* Neutrals — warm, tuned to cream */
+    --ink-900: #1C1510;
+    --ink-800: #2E241C;
+    --ink-700: #4A3E32;
+    --ink-500: #7A6B5C;
+    --ink-400: #9A8A7A;
+    --ink-300: #BDB0A0;
+    --ink-200: #D9CEBE;
+    --ink-100: #EADFCB;
+    --ink-050: #F6EEDE;
+    --paper:   #FBF5E8;
+    --white:   #FFFDF7;
+
+    /* Semantic */
+    --success: #3E7A4A;
+    --warning: #C98A1E;
+    --danger:  #B72336;
+    --info:    #3D3F6E;
+
+    /* Shadow */
+    --dish-shadow: 0 18px 40px -18px rgba(90, 16, 20, .28), 0 6px 14px -8px rgba(28, 21, 16, .18);
+    --card-shadow: 0 2px 6px -2px rgba(28,21,16,.08), 0 12px 28px -18px rgba(28,21,16,.16);
+
+    --radius-xs: 6px;
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --radius-xl: 28px;
+    --radius-full: 999px;
+  }
+
+  *{box-sizing:border-box}
+  html, body{margin:0; background: #EFE6D4; color: var(--ink-900); font-family: "Roboto Flex", system-ui, sans-serif; font-variation-settings: "wdth" 100, "opsz" 16; -webkit-font-smoothing: antialiased;}
+
+  /* Page scaffold */
+  .page{
+    max-width: 1360px; margin: 0 auto; padding: 56px 40px 120px;
+  }
+  .masthead{
+    display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 24px;
+    padding-bottom: 28px; border-bottom: 1px solid var(--ink-200);
+    margin-bottom: 56px;
+  }
+  .logo{
+    display:flex; align-items:center; gap: 18px;
+  }
+  .logo-mark{
+    width: 64px; height: 64px; border-radius: 14px;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,.25), transparent 60%),
+      linear-gradient(135deg, var(--crimson), var(--burgundy));
+    display:grid; place-items:center; color: var(--cream); font-family: "Alice", serif; font-size: 34px; line-height: 1;
+    box-shadow: 0 10px 24px -12px rgba(90,16,20,.6);
+    position: relative; overflow: hidden;
+  }
+  .logo-mark::before{
+    content:""; position:absolute; inset: 4px; border-radius: 10px; border: 1px solid rgba(207,169,104,.55); pointer-events:none;
+  }
+  .logo-text{display:flex; flex-direction:column; line-height: 1;}
+  .logo-text b{font-family: "Alice", serif; font-weight: 400; font-size: 28px; letter-spacing: .01em; color: var(--ink-900);}
+  .logo-text span{font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: var(--ink-500); margin-top: 6px;}
+
+  .masthead-meta{ text-align: right; font-size: 12px; color: var(--ink-500); letter-spacing: .12em; text-transform: uppercase;}
+  .masthead-meta b{display:block; color: var(--ink-800); font-family:"Alice", serif; font-size: 22px; letter-spacing: 0; text-transform: none; margin-bottom: 4px;}
+
+  .intro{
+    display:grid; grid-template-columns: 1.1fr 1fr; gap: 48px; margin-bottom: 72px; align-items: start;
+  }
+  .intro h1{
+    font-family: "Alice", serif; font-weight: 400; font-size: 72px; line-height: .96; letter-spacing: -0.01em; margin: 0 0 20px;
+    color: var(--ink-900);
+  }
+  .intro h1 em{ font-style: normal; color: var(--wine); }
+  .intro p{ font-size: 17px; line-height: 1.55; color: var(--ink-700); margin: 0 0 14px; max-width: 560px;}
+  .principles{
+    background: var(--cream); border-radius: 22px; padding: 28px 30px; border: 1px solid var(--cream-deep);
+    box-shadow: var(--card-shadow);
+    background-image:
+      radial-gradient(circle at 12px 12px, rgba(207,169,104,.35) 1px, transparent 1.5px),
+      radial-gradient(circle at 32px 32px, rgba(207,169,104,.22) 1px, transparent 1.5px);
+    background-size: 40px 40px, 40px 40px;
+    background-position: 0 0, 20px 20px;
+  }
+  .principles h3{
+    margin: 0 0 16px; font-family: "Alice", serif; font-weight: 400; font-size: 22px; color: var(--ink-900);
+  }
+  .principles ol{ margin: 0; padding-left: 0; list-style: none; counter-reset: pr;}
+  .principles li{
+    counter-increment: pr; padding: 10px 0; border-top: 1px dashed rgba(90,16,20,.22); display:grid; grid-template-columns: 28px 1fr; gap: 12px; color: var(--ink-800); font-size: 14px; line-height: 1.45;
+  }
+  .principles li:first-child{border-top: 0}
+  .principles li::before{
+    content: counter(pr, decimal-leading-zero);
+    font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--wine); padding-top: 3px;
+  }
+  .principles li b{ color: var(--ink-900); font-weight: 600; }
+
+  /* Sections */
+  section{ margin-bottom: 84px; }
+  .sec-head{
+    display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: end; margin-bottom: 28px;
+  }
+  .sec-num{
+    font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--wine); letter-spacing: .18em; padding-bottom: 8px;
+  }
+  .sec-title{
+    font-family: "Alice", serif; font-weight: 400; font-size: 40px; line-height: 1; color: var(--ink-900); margin: 0;
+  }
+  .sec-sub{ font-size: 13px; color: var(--ink-500); letter-spacing: .14em; text-transform: uppercase; padding-bottom: 10px;}
+  .sec-rule{ grid-column: 1 / -1; height: 1px; background: var(--ink-200); margin-top: 12px;}
+
+  /* ---------- COLOR ---------- */
+  .palette-grid{
+    display:grid; grid-template-columns: repeat(4, 1fr); gap: 18px;
+  }
+  .palette-group{
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    background: var(--paper); border-radius: 18px; padding: 14px; border: 1px solid var(--ink-200);
+  }
+  .palette-group h4{ grid-column: 1 / -1; margin: 0 0 2px; font-family: "Alice", serif; font-weight: 400; font-size: 18px; color: var(--ink-900);}
+  .palette-group .cap{ grid-column: 1 / -1; font-size: 11px; color: var(--ink-500); letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px;}
+  .swatch{
+    border-radius: 12px; aspect-ratio: 1 / 1; position: relative; padding: 12px; display:flex; flex-direction: column; justify-content: space-between;
+    font-family: "JetBrains Mono", monospace; color: rgba(255,255,255,.92); font-size: 10px; letter-spacing: .06em;
+    overflow: hidden;
+  }
+  .swatch.light{ color: rgba(28,21,16,.75); }
+  .swatch .name{ font-weight: 500; font-size: 12px; line-height: 1.1; letter-spacing: 0;}
+  .swatch .hex{ opacity: .75; }
+  .swatch.big{ grid-column: span 2; aspect-ratio: 2.1 / 1;}
+
+  .gray-row{
+    margin-top: 18px; display:grid; grid-template-columns: repeat(10, 1fr); gap: 6px; background: var(--paper); border-radius: 18px; padding: 14px; border: 1px solid var(--ink-200);
+  }
+  .gray-row h4{ grid-column: 1 / -1; margin: 0 0 10px; font-family: "Alice", serif; font-weight: 400; font-size: 18px;}
+  .gray-cell{ aspect-ratio: 1 / 1.1; border-radius: 10px; padding: 8px; display:flex; flex-direction:column; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: 10px;}
+
+  .semantic-row{
+    margin-top: 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+  }
+  .sem{
+    background: var(--paper); border: 1px solid var(--ink-200); border-radius: 16px; padding: 14px; display:flex; align-items:center; gap: 14px;
+  }
+  .sem .dot{ width: 42px; height: 42px; border-radius: 12px; flex:none;}
+  .sem b{font-family: "Alice", serif; font-weight: 400; font-size: 18px; color: var(--ink-900); display:block;}
+  .sem span{ font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-500);}
+  .sem em{ font-style: normal; display:block; font-size: 12px; color: var(--ink-700); margin-top: 2px;}
+
+  /* ---------- TYPOGRAPHY ---------- */
+  .type-grid{ display:grid; grid-template-columns: 1.4fr 1fr; gap: 28px; align-items: start;}
+  .type-card{ background: var(--paper); border: 1px solid var(--ink-200); border-radius: 20px; padding: 28px;}
+  .type-specimen{ background: var(--cream); border-radius: 20px; padding: 40px; border: 1px solid var(--cream-deep); position: relative; overflow: hidden;}
+  .specimen-bg{ position: absolute; inset: 0; background-image: repeating-linear-gradient(45deg, rgba(207,169,104,.16) 0 1px, transparent 1px 14px); pointer-events: none;}
+  .specimen-label{ position: relative; font-family: "JetBrains Mono", monospace; font-size: 11px; letter-spacing: .18em; color: var(--wine); text-transform: uppercase; margin-bottom: 20px;}
+  .specimen-big{ position: relative; font-family: "Alice", serif; font-size: 140px; line-height: .9; color: var(--ink-900); margin: 0;}
+  .specimen-big em{ font-style: normal; color: var(--wine);}
+  .specimen-caption{ position: relative; margin-top: 16px; font-size: 13px; color: var(--ink-500); letter-spacing: .14em; text-transform: uppercase;}
+
+  .type-row{ display: grid; grid-template-columns: 140px 1fr auto; gap: 18px; align-items: baseline; padding: 16px 0; border-bottom: 1px dashed var(--ink-200);}
+  .type-row:last-child{border-bottom: 0;}
+  .type-row .label{ font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-500); letter-spacing: .12em; text-transform: uppercase;}
+  .type-row .sample{color: var(--ink-900);}
+  .type-row .meta{ font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-500);}
+  .h1{ font-family: "Alice", serif; font-size: 40px; line-height: 1.05;}
+  .h2{ font-family: "Alice", serif; font-size: 28px; line-height: 1.1;}
+  .h3{ font-family: "Alice", serif; font-size: 22px; line-height: 1.15;}
+  .price{ font-family: "Alice", serif; font-size: 28px; line-height: 1;}
+  .body{ font-family: "Roboto Flex", sans-serif; font-size: 15px; line-height: 1.5; color: var(--ink-800);}
+  .body-sm{ font-family: "Roboto Flex", sans-serif; font-size: 13px; line-height: 1.5; color: var(--ink-700);}
+  .caption{ font-family: "Roboto Flex", sans-serif; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-500);}
+  .num{ font-family: "Roboto Flex", sans-serif; font-variation-settings: "wdth" 85, "wght" 600; font-size: 15px; color: var(--ink-900);}
+
+  /* ---------- COMPONENTS ---------- */
+  .comp-grid{ display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; align-items: start;}
+  .panel{ grid-column: span 6; background: var(--paper); border: 1px solid var(--ink-200); border-radius: 22px; padding: 24px; display:flex; flex-direction:column;}
+  .panel.full{ grid-column: span 12;}
+  .panel.third{ grid-column: span 4;}
+  .panel.twothird{ grid-column: span 8;}
+  .panel-head{ display:flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px;}
+  .panel-head h3{ margin: 0; font-family: "Alice", serif; font-weight: 400; font-size: 24px; color: var(--ink-900);}
+  .panel-head span{ font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-500); letter-spacing: .12em; text-transform: uppercase;}
+
+  /* Buttons */
+  .btn{
+    display: inline-flex; align-items:center; justify-content:center; gap: 8px;
+    padding: 14px 22px; border-radius: var(--radius-full); font-family: "Roboto Flex"; font-weight: 600; font-size: 15px; letter-spacing: .01em;
+    border: 0; cursor: pointer; white-space: nowrap;
+    transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn-primary{ background: var(--wine); color: var(--cream); box-shadow: 0 8px 18px -10px rgba(90,16,20,.6);}
+  .btn-primary:hover{ background: var(--burgundy);}
+  .btn-secondary{ background: var(--cream); color: var(--ink-900); border: 1px solid var(--ink-200);}
+  .btn-secondary:hover{ background: var(--cream-deep);}
+  .btn-ghost{ background: transparent; color: var(--wine); padding: 14px 10px;}
+  .btn-dark{ background: var(--midnight); color: var(--cream);}
+  .btn-gold{ background: var(--sand); color: var(--midnight);}
+  .btn-green{ background: var(--forest); color: var(--cream); box-shadow: 0 8px 18px -10px rgba(14,46,26,.6);}
+  .btn-green:hover{ background: var(--pine);}
+  .btn-mint{ background: var(--mint); color: var(--pine); box-shadow: 0 8px 18px -10px rgba(92,138,90,.5);}
+  .btn-mint:hover{ background: #4A7548;}
+  .btn-green-outline{ background: transparent; color: var(--forest); border: 1.5px solid var(--forest);}
+  .btn-green-outline:hover{ background: var(--forest); color: var(--cream);}
+  .btn-sm{ padding: 10px 16px; font-size: 13px;}
+  .btn-lg{ padding: 18px 28px; font-size: 17px;}
+  .btn-icon{ width: 44px; height: 44px; padding: 0; border-radius: var(--radius-full);}
+  .btn-pill{ padding: 8px 14px; font-size: 13px; background: var(--ink-050); color: var(--ink-800); border-radius: var(--radius-full);}
+  .btn-pill.on{ background: var(--ink-900); color: var(--cream);}
+
+  .btn-row{ display:flex; flex-wrap: wrap; gap: 12px; align-items: center;}
+  .btn-group{ margin-bottom: 14px;}
+  .btn-group:last-child{ margin-bottom: 0;}
+
+  /* Mobile frame utilities */
+  .phone{
+    width: 360px; background: var(--cream); border-radius: 32px; padding: 16px; box-shadow: var(--card-shadow); border: 1px solid var(--cream-deep);
+    margin: 0 auto;
+  }
+  .phone.tight{ width: 320px;}
+  .phone-label{ text-align:center; font-family: "JetBrains Mono", monospace; font-size: 10px; color: var(--ink-500); letter-spacing: .16em; text-transform: uppercase; margin-top: 12px;}
+
+  /* Dish card — блюдо висит в пространстве, без подложки и рамки */
+  .dish-card{
+    background: transparent; border: 0; padding: 4px 4px 10px;
+    display: flex; flex-direction: column; gap: 8px; position: relative;
+  }
+  .dish-media{
+    aspect-ratio: 1 / 1; border-radius: 0; background: transparent;
+    display:grid; place-items:center; position: relative; overflow: visible;
+  }
+  .dish-media img{ width: 118%; height: 118%; object-fit: contain; filter: drop-shadow(0 18px 22px rgba(90,16,20,.22)) drop-shadow(0 6px 10px rgba(28,21,16,.12)); transition: transform .5s cubic-bezier(.22,.8,.3,1), filter .5s ease;}
+  .dish-card:hover{ cursor: pointer; }
+  .dish-card:hover .dish-media img{ transform: scale(1.1) rotate(-3deg); filter: drop-shadow(0 28px 32px rgba(90,16,20,.32)) drop-shadow(0 12px 16px rgba(28,21,16,.18));}
+  /* hover on any dish-looking image throughout the system */
+  .story-img img, .banner-dish{ transition: transform .5s cubic-bezier(.22,.8,.3,1), filter .5s ease; }
+  .story:hover .story-img img{ transform: translateY(4px) scale(1.12) rotate(-4deg); }
+  .banner:hover .banner-dish{ transform: rotate(-6deg) scale(1.05) translate(-4px, -4px); }
+  .sheet-hero:hover img{ animation-play-state: paused; }
+  .dish-tag{
+    position: absolute; top: 8px; left: 8px; background: var(--wine); color: var(--cream);
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase; padding: 6px 10px; border-radius: var(--radius-full); font-weight: 600;
+  }
+  .dish-fav{
+    position: absolute; top: 8px; right: 8px; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,253,247,.85); backdrop-filter: blur(6px);
+    border: 1px solid var(--cream-deep); display:grid; place-items:center; cursor: pointer;
+  }
+  .dish-title{ font-family: "Alice", serif; font-size: 18px; line-height: 1.15; color: var(--ink-900); margin: 0;}
+  .dish-meta{ font-size: 12px; color: var(--ink-500); display: flex; align-items:center; gap: 6px;}
+  .dish-meta .dotsep{ width: 3px; height: 3px; border-radius: 50%; background: var(--ink-300);}
+  .dish-foot{ display:flex; justify-content:space-between; align-items:center; margin-top: 4px;}
+  .dish-price{ font-family: "Alice", serif; font-size: 22px; color: var(--ink-900);}
+  .dish-price small{ font-size: 12px; color: var(--ink-500); margin-left: 4px;}
+  .dish-add{
+    width: 36px; height: 36px; border-radius: 50%; background: var(--wine); color: var(--cream); display:grid; place-items:center; border: 0; cursor: pointer;
+    box-shadow: 0 6px 14px -6px rgba(90,16,20,.6);
+  }
+
+  /* Dish grid sample */
+  .dish-grid{ display: grid; grid-template-columns: 1fr 1fr; gap: 12px;}
+
+  /* Weight slider — непрерывный, с тяжением кругляшка */
+  .weight{
+    background: var(--cream); border-radius: 20px; padding: 18px 18px 16px; border: 1px solid var(--cream-deep);
+  }
+  .weight-head{ display:flex; justify-content: space-between; align-items:baseline; margin-bottom: 18px;}
+  .weight-head h4{ margin: 0; font-family: "Alice", serif; font-weight: 400; font-size: 18px;}
+  .weight-head .weight-value{ font-family: "Alice", serif; font-size: 22px; color: var(--ink-900); letter-spacing: .01em;}
+  .weight-head .weight-value b{ font-weight: 400;}
+  .weight-head .price{ font-family: "Alice", serif; font-size: 26px; color: var(--wine); transition: color .2s;}
+
+  .slider{
+    position: relative; height: 44px; user-select: none; touch-action: none; cursor: pointer;
+    padding: 0 14px;
+    margin-top: 32px;
+  }
+  .slider-rail{
+    position: absolute; left: 14px; right: 14px; top: 50%; transform: translateY(-50%);
+    height: 6px; border-radius: 999px; background: var(--cream-deep);
+    overflow: hidden;
+  }
+  .slider-fill{
+    position: absolute; inset: 0 auto 0 0; width: 30%;
+    background: linear-gradient(90deg, var(--wine), var(--crimson));
+    border-radius: 999px;
+  }
+  .slider-ticks{
+    position: absolute; left: 14px; right: 14px; top: 50%; transform: translateY(-50%);
+    display: flex; justify-content: space-between; pointer-events: none;
+  }
+  .slider-ticks i{
+    width: 2px; height: 10px; border-radius: 1px; background: var(--ink-200);
+  }
+  .slider-thumb{
+    position: absolute; top: 50%; left: 30%; transform: translate(-50%, -50%);
+    width: 28px; height: 28px; border-radius: 50%; background: var(--white);
+    border: 2px solid var(--wine);
+    box-shadow: 0 6px 14px -4px rgba(90,16,20,.45), 0 2px 4px rgba(28,21,16,.15);
+    transition: transform .12s ease;
+  }
+  .slider-thumb::after{
+    content:""; position: absolute; inset: 5px; border-radius: 50%; background: var(--wine);
+  }
+  .slider.dragging .slider-thumb{ transform: translate(-50%, -50%) scale(1.15);}
+  .slider-bubble{
+    position: absolute; top: -4px; transform: translate(-50%, -100%);
+    background: var(--ink-900); color: var(--cream);
+    font-family: "Roboto Flex"; font-weight: 600; font-size: 12px; letter-spacing: .02em;
+    padding: 5px 10px; border-radius: 8px; white-space: nowrap;
+    opacity: 1; transition: transform .15s ease, box-shadow .15s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 10px -4px rgba(28,21,16,.35);
+  }
+  .slider-bubble::after{
+    content:""; position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%) rotate(45deg);
+    width: 8px; height: 8px; background: var(--ink-900);
+  }
+  .slider.dragging .slider-bubble{ transform: translate(-50%, -100%) scale(1.08); background: var(--wine); box-shadow: 0 8px 18px -6px rgba(90,16,20,.55); }
+  .slider.dragging .slider-bubble::after{ background: var(--wine); }
+  .slider-scale{
+    margin-top: 10px; display:flex; justify-content: space-between;
+    font-family: "Roboto Flex"; font-size: 11px; color: var(--ink-500); letter-spacing: .08em;
+    padding: 0 4px;
+  }
+  .slider-scale span{ cursor: pointer; padding: 2px 4px; border-radius: 4px;}
+  .slider-scale span.near{ color: var(--wine); font-weight: 600;}
+
+  .weight-foot{ margin-top: 14px; display:flex; justify-content: space-between; align-items:center; font-size: 11px; color: var(--ink-500); letter-spacing: .08em; text-transform: lowercase;}
+  .weight-foot b{ color: var(--wine); font-weight: 600; font-family: "Alice", serif; font-size: 16px; letter-spacing: 0; text-transform: none;}
+
+  /* Tab bar */
+  .tabbar{
+    display:grid; grid-template-columns: repeat(5, 1fr); background: var(--white); border-radius: 22px; padding: 8px; border: 1px solid var(--cream-deep);
+    box-shadow: 0 -6px 16px -10px rgba(28,21,16,.15);
+  }
+  .tab{ display:grid; gap: 4px; justify-items: center; padding: 10px 4px; cursor: pointer; border-radius: 16px; color: var(--ink-500); position: relative;}
+  .tab svg{width: 22px; height: 22px;}
+  .tab span{ font-size: 10px; letter-spacing: .06em; text-transform: uppercase; font-weight: 500;}
+  .tab.active{ color: var(--wine); background: var(--cream);}
+  .tab.active::before{ content:""; position: absolute; top: 2px; width: 5px; height: 5px; border-radius: 50%; background: var(--wine);}
+  .tab-badge{ position: absolute; top: 6px; right: 20%; background: var(--crimson); color: var(--cream); font-size: 9px; font-weight: 700; border-radius: 10px; padding: 1px 5px;}
+
+  /* Stories */
+  .stories{ display:flex; gap: 10px; overflow-x: auto; padding: 6px 0;}
+  .story{
+    flex: none; width: 72px; text-align: center;
+  }
+  .story-ring{
+    width: 72px; height: 72px; border-radius: 50%; padding: 2px;
+    background: conic-gradient(from 220deg, var(--crimson), var(--sand), var(--wine), var(--sand), var(--crimson));
+  }
+  .story-ring.seen{ background: var(--ink-200);}
+  .story-img{
+    width: 100%; height: 100%; border-radius: 50%; background: var(--cream); border: 3px solid var(--white);
+    overflow: hidden; display:grid; place-items:center; position: relative;
+  }
+  .story-img img{ width: 130%; height: 130%; object-fit: contain; transform: translateY(4px);}
+  .story-img.flat{ background: var(--wine);}
+  .story-img.flat2{ background: var(--forest);}
+  .story-img.flat3{ background: var(--midnight);}
+  .story-img.flat b{ font-family: "Alice", serif; color: var(--cream); font-size: 22px;}
+  .story-label{ margin-top: 6px; font-size: 10px; letter-spacing: .04em; color: var(--ink-700); line-height: 1.2;}
+
+  /* Banner slider */
+  .banner{
+    position: relative; height: 180px; border-radius: 22px; overflow: hidden; color: var(--cream);
+    padding: 22px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .banner.red{ background: linear-gradient(130deg, var(--wine), var(--burgundy));}
+  .banner.green{ background: linear-gradient(130deg, var(--forest), var(--pine));}
+  .banner.ink{ background: linear-gradient(130deg, var(--indigo), var(--midnight));}
+  .banner-deco{
+    position: absolute; right: -60px; top: -60px; width: 360px; height: 420px;
+    background-color: var(--sand);
+    -webkit-mask-image: url('assets/peacock-pattern.png');
+            mask-image: url('assets/peacock-pattern.png');
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-size: contain;   mask-size: contain;
+    -webkit-mask-position: right top; mask-position: right top;
+    opacity: .38;
+    pointer-events: none;
+    transform: scaleX(-1);
+  }
+  .banner.red .banner-deco{ background-color: #F3D9A8; opacity: .3; }
+  .banner.green .banner-deco{ background-color: #E8CC8A; opacity: .34; }
+  .banner.ink .banner-deco{ background-color: #CFA968; opacity: .4; }
+  .banner.small .banner-deco{ width: 240px; height: 300px; right: -40px; top: -40px; }
+  .banner-dish{
+    position: absolute; right: -40px; bottom: -40px; width: 280px; height: 280px;
+    filter: drop-shadow(0 22px 28px rgba(0,0,0,.4)) drop-shadow(0 8px 12px rgba(0,0,0,.25));
+    object-fit: contain;
+    z-index: 1;
+  }
+  .banner.small .banner-dish{ width: 190px; height: 190px; right: -30px; bottom: -30px;}
+  .banner-kicker{ font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--sand);}
+  .banner-title{ font-family: "Alice", serif; font-size: 32px; line-height: 1; max-width: 60%; margin: 8px 0 0;}
+  .banner-cta{ align-self: flex-start; padding: 10px 16px; background: var(--sand); color: var(--midnight); border-radius: var(--radius-full); font-weight: 600; font-size: 13px;}
+  .banner-dots{ position: absolute; bottom: 14px; right: 16px; display:flex; gap: 5px;}
+  .banner-dots i{ width: 16px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.35); display:block;}
+  .banner-dots i.on{ background: var(--sand); width: 22px;}
+
+  /* Tiles */
+  .tiles{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px;}
+  .tile{
+    border-radius: 18px; padding: 16px; color: var(--cream); min-height: 120px; position: relative; overflow: hidden; display:flex; flex-direction:column; justify-content:space-between;
+    cursor: pointer; transition: transform .15s ease;
+  }
+  .tile:hover{ transform: translateY(-2px); }
+  .tile h4{ margin: 0; font-family: "Alice", serif; font-weight: 400; font-size: 20px; line-height: 1.1;}
+  .tile span{ font-size: 11px; letter-spacing: .12em; text-transform: uppercase; opacity: .8;}
+  .tile.red{ background: var(--crimson);}
+  .tile.wine{ background: var(--wine);}
+  .tile.green{ background: var(--forest);}
+  .tile.mint{ background: var(--mint);}
+  .tile.ink{ background: var(--midnight);}
+  .tile.sand{ background: var(--sand); color: var(--midnight);}
+  .tile.cream{ background: var(--cream-deep); color: var(--ink-900);}
+  .tile .count{ font-family: "Alice", serif; font-size: 28px; line-height: 1;}
+  .tile-ornament{
+    position: absolute; right: -20px; top: -20px; width: 80px; height: 80px; border-radius: 50%;
+    border: 1px solid currentColor; opacity: .18;
+  }
+  .tile-ornament.two{ right: 14px; top: 24px; width: 40px; height: 40px; }
+
+  /* Bottom sheet */
+  .sheet{
+    width: 100%; background: var(--white); border-radius: 28px 28px 0 0; padding: 0 18px 20px;
+    border: 1px solid var(--cream-deep); box-shadow: 0 -18px 40px -24px rgba(28,21,16,.25);
+    overflow: hidden;
+  }
+  .sheet-grab{ width: 44px; height: 4px; border-radius: 2px; background: var(--ink-200); margin: 12px auto 0; position: relative; z-index: 3;}
+  .sheet-hero{
+    position: relative;
+    height: 260px;
+    margin: 0 -18px 10px;
+    overflow: visible;
+    z-index: 1;
+  }
+  .sheet-hero img{
+    position: absolute;
+    left: 50%;
+    bottom: -8%;
+    width: 125%;
+    height: auto;
+    max-width: none;
+    object-fit: contain;
+    filter: none;
+    animation: sheet-dish-spin 60s linear infinite;
+    transform-origin: 50% 50%;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  @keyframes sheet-dish-spin{
+    from{ transform: translateX(-50%) rotate(0deg); }
+    to  { transform: translateX(-50%) rotate(360deg); }
+  }
+  .sheet-hero-tag{
+    position: absolute; left: 10px; bottom: 14px; z-index: 2;
+    background: var(--wine); color: var(--cream);
+    font-family: "Roboto Flex", sans-serif; font-weight: 600;
+    font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+    padding: 6px 12px; border-radius: 999px;
+    box-shadow: 0 6px 14px -6px rgba(90,16,20,.5);
+  }
+  .sheet-hero-kicker{
+    position: absolute; left: 4px; bottom: 0; z-index: 2;
+    font-family: "JetBrains Mono", monospace; font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--sand-deep);
+  }
+  .sheet-hero-kicker::before{ content:""; display:inline-block; width: 18px; height: 1px; background: var(--sand-deep); vertical-align: middle; margin-right: 8px;}
+  .sheet-head{ display:flex; justify-content: space-between; align-items: flex-start; gap: 10px;}
+  .sheet-head h3{ margin: 0; font-family: "Alice", serif; font-weight: 400; font-size: 24px; line-height: 1.1;}
+  .sheet-head .sheet-price{ font-family: "Alice", serif; font-size: 24px; color: var(--wine); white-space: nowrap;}
+  .sheet-desc{ font-size: 13px; color: var(--ink-700); margin: 8px 0 14px; line-height: 1.5;}
+  .sheet-opts{ display:flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;}
+  .sheet-cta{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px;}
+  .sheet-cta .btn{ width: 100%;}
+
+  /* Footer note */
+  .footnote{
+    margin-top: 80px; padding: 24px; border-radius: 20px; background: var(--midnight); color: var(--cream);
+    display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center;
+  }
+  .footnote b{ font-family: "Alice", serif; font-weight: 400; font-size: 22px; display:block; margin-bottom: 4px;}
+  .footnote span{ font-size: 12px; color: rgba(241,228,206,.7); letter-spacing: .12em; text-transform: uppercase;}
+
+  /* Helpers */
+  .row-gap{ display:flex; flex-direction: column; gap: 16px;}
+  .inline-codes{display:flex; gap: 14px; font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--ink-500);}
+
+  /* Ornamental divider */
+  .ornament-rule{
+    height: 24px; display: grid; place-items: center; color: var(--sand-deep); margin: 4px 0 12px;
+  }
+  .ornament-rule::before{
+    content: "◆  ✦  ◆";
+    letter-spacing: 12px; font-size: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Masthead -->
+  <header class="masthead">
+    <div class="logo">
+      <div class="logo-mark">
+        С
+      </div>
+      <div class="logo-text">
+        <b>сказка востока</b>
+        <span>design system · v1.1</span>
+      </div>
+    </div>
+    <div class="masthead-meta">
+      <b>скатерть-самобранка</b>
+      mobile web · april 2026
+    </div>
+  </header>
+
+  <!-- Intro -->
+  <div class="intro">
+    <div>
+      <h1>дизайн<br/>в лучших<br/>традициях<br/><em>востока</em></h1>
+      <p>Визуальный язык построен вокруг метафоры скатерти-самобранки: тёплый кремовый холст, золотые акценты и глубокие восточные цвета создают сцену, на которой главный герой — блюдо.</p>
+      <p>Система оптимизирована под мобильный web. Интерфейс остаётся спокойным и тихим, чтобы фотографии блюд вид сверху звучали в полный голос.</p>
+    </div>
+    <aside class="principles">
+      <h3>принципы</h3>
+      <ol>
+        <li><span><b>фото — герой.</b> интерфейс — рама. никогда не конкурируем с тарелкой.</span></li>
+        <li><span><b>кремовый холст.</b> белых пустот нет — есть тёплая скатерть и её оттенки.</span></li>
+        <li><span><b>золото — нить.</b> тонкие орнаменты, точки, окантовки; никогда не заливки.</span></li>
+        <li><span><b>цвет — щедрость.</b> красный, зелёный, индиго — насыщенно, но редко.</span></li>
+        <li><span><b>типографика.</b> alice — для блюд и цен. roboto flex — для всего остального.</span></li>
+      </ol>
+    </aside>
+  </div>
+
+  <!-- 01 · COLOR -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">01 / color</div>
+      <h2 class="sec-title">палитра</h2>
+      <div class="sec-sub">brand · semantic · neutrals</div>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="palette-grid">
+      <div class="palette-group">
+        <h4>скатерть</h4>
+        <div class="cap">кремовая база · золотая нить</div>
+        <div class="swatch light" style="background:#F1E4CE; border: 1px solid #E8D7B8;"><div class="name">Cream</div><div class="hex">#F1E4CE</div></div>
+        <div class="swatch" style="background:#CFA968; color:#3a2a10"><div class="name">Sand</div><div class="hex">#CFA968</div></div>
+      </div>
+
+      <div class="palette-group">
+        <h4>огонь</h4>
+        <div class="cap">красные · гостеприимство</div>
+        <div class="swatch" style="background:#B72336"><div class="name">Crimson</div><div class="hex">#B72336</div></div>
+        <div class="swatch" style="background:#8A1B26"><div class="name">Wine</div><div class="hex">#8A1B26</div></div>
+        <div class="swatch big" style="background:#5A1014"><div class="name">Burgundy</div><div class="hex">#5A1014</div></div>
+      </div>
+
+      <div class="palette-group">
+        <h4>сад</h4>
+        <div class="cap">зелёные · зелень, травы</div>
+        <div class="swatch" style="background:#5C8A5A"><div class="name">Mint</div><div class="hex">#5C8A5A</div></div>
+        <div class="swatch" style="background:#1F4A2A"><div class="name">Forest</div><div class="hex">#1F4A2A</div></div>
+        <div class="swatch big" style="background:#0E2E1A"><div class="name">Pine</div><div class="hex">#0E2E1A</div></div>
+      </div>
+
+      <div class="palette-group">
+        <h4>ночь</h4>
+        <div class="cap">индиго · небо, специи</div>
+        <div class="swatch" style="background:#3D3F6E"><div class="name">Indigo</div><div class="hex">#3D3F6E</div></div>
+        <div class="swatch" style="background:#1A1B45"><div class="name">Midnight</div><div class="hex">#1A1B45</div></div>
+        <div class="swatch big light" style="background:#F8EFDE; border: 1px solid #E8D7B8"><div class="name">Cream Soft</div><div class="hex">#F8EFDE</div></div>
+      </div>
+    </div>
+
+    <div class="gray-row">
+      <h4>тёплые нейтрали</h4>
+      <div class="gray-cell light" style="background:#FFFDF7; border:1px solid #EADFCB"><b>White</b><span>#FFFDF7</span></div>
+      <div class="gray-cell light" style="background:#FBF5E8"><b>Paper</b><span>#FBF5E8</span></div>
+      <div class="gray-cell light" style="background:#F6EEDE"><b>Ink 050</b><span>#F6EEDE</span></div>
+      <div class="gray-cell light" style="background:#EADFCB"><b>Ink 100</b><span>#EADFCB</span></div>
+      <div class="gray-cell light" style="background:#D9CEBE"><b>Ink 200</b><span>#D9CEBE</span></div>
+      <div class="gray-cell light" style="background:#BDB0A0"><b>Ink 300</b><span>#BDB0A0</span></div>
+      <div class="gray-cell" style="background:#9A8A7A; color:#fff"><b>Ink 400</b><span>#9A8A7A</span></div>
+      <div class="gray-cell" style="background:#7A6B5C; color:#fff"><b>Ink 500</b><span>#7A6B5C</span></div>
+      <div class="gray-cell" style="background:#4A3E32; color:#fff"><b>Ink 700</b><span>#4A3E32</span></div>
+      <div class="gray-cell" style="background:#1C1510; color:#fff"><b>Ink 900</b><span>#1C1510</span></div>
+    </div>
+
+    <div class="semantic-row">
+      <div class="sem"><div class="dot" style="background:#3E7A4A"></div><div><b>success</b><span>#3E7A4A</span><em>заказ подтверждён</em></div></div>
+      <div class="sem"><div class="dot" style="background:#C98A1E"></div><div><b>warning</b><span>#C98A1E</span><em>мало на складе</em></div></div>
+      <div class="sem"><div class="dot" style="background:#B72336"></div><div><b>danger</b><span>#B72336</span><em>ошибка, отмена</em></div></div>
+      <div class="sem"><div class="dot" style="background:#3D3F6E"></div><div><b>info</b><span>#3D3F6E</span><em>информация</em></div></div>
+    </div>
+  </section>
+
+  <!-- 02 · TYPOGRAPHY -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">02 / type</div>
+      <h2 class="sec-title">типографика</h2>
+      <div class="sec-sub">alice · roboto flex</div>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="type-grid">
+      <div class="type-specimen">
+        <div class="specimen-bg"></div>
+        <div class="specimen-label">alice · google fonts · serif</div>
+        <p class="specimen-big">ска<em>зка</em><br/>вос<em>тока</em></p>
+        <div class="specimen-caption">заголовки · названия блюд · цены</div>
+      </div>
+      <div class="type-card">
+        <div class="type-row"><div class="label">display</div><div class="sample h1" style="font-size:48px;">плов по-бухарски</div><div class="meta">alice · 48/50</div></div>
+        <div class="type-row"><div class="label">h1</div><div class="sample h1">манты с тыквой</div><div class="meta">alice · 40/42</div></div>
+        <div class="type-row"><div class="label">h2</div><div class="sample h2">сегодня в печи</div><div class="meta">alice · 28/32</div></div>
+        <div class="type-row"><div class="label">h3</div><div class="sample h3">лагман домашний</div><div class="meta">alice · 22/26</div></div>
+        <div class="type-row"><div class="label">price</div><div class="sample price">890 <small style="font-size:14px;color:var(--ink-500)">₽</small></div><div class="meta">alice · 28/28</div></div>
+        <div class="type-row"><div class="label">body</div><div class="sample body">Баранина, томлёная в казане с айвой и курагой, рис дев-зира, чеснок, зира.</div><div class="meta">roboto flex · 15/22</div></div>
+        <div class="type-row"><div class="label">body sm</div><div class="sample body-sm">300 г · 45 мин · острое</div><div class="meta">roboto flex · 13/20</div></div>
+        <div class="type-row"><div class="label">caption</div><div class="sample caption">новое в меню</div><div class="meta">roboto flex · 11/14</div></div>
+        <div class="type-row"><div class="label">numeric</div><div class="sample num">200 г · 450 ккал · 12 шт</div><div class="meta">flex · wdth 85 · w600</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · BUTTONS -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">03 / components</div>
+      <h2 class="sec-title">кнопки</h2>
+      <div class="sec-sub">primary · secondary · green · ghost · pill</div>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="comp-grid">
+      <div class="panel twothird">
+        <div class="panel-head"><h3>иерархия</h3><span>основные действия</span></div>
+        <div class="btn-group btn-row">
+          <button class="btn btn-primary btn-lg">добавить в заказ — 890 ₽</button>
+          <button class="btn btn-green btn-lg">оформить заказ</button>
+          <button class="btn btn-secondary btn-lg">в избранное</button>
+          <button class="btn btn-ghost btn-lg">отмена</button>
+        </div>
+        <div class="btn-group btn-row">
+          <button class="btn btn-primary">оформить</button>
+          <button class="btn btn-green">подтвердить</button>
+          <button class="btn btn-mint">вегетарианское</button>
+          <button class="btn btn-green-outline">состав блюда</button>
+          <button class="btn btn-secondary">продолжить</button>
+          <button class="btn btn-dark">войти</button>
+          <button class="btn btn-gold">пригласить друга</button>
+          <button class="btn btn-ghost">позже</button>
+        </div>
+        <div class="btn-group btn-row">
+          <button class="btn btn-primary btn-sm">повторить</button>
+          <button class="btn btn-green btn-sm">готово</button>
+          <button class="btn btn-secondary btn-sm">детали</button>
+          <button class="btn btn-pill on">все</button>
+          <button class="btn btn-pill">горячее</button>
+          <button class="btn btn-pill">салаты</button>
+          <button class="btn btn-pill">выпечка</button>
+          <button class="btn btn-pill">напитки</button>
+        </div>
+        <div class="btn-group btn-row">
+          <button class="btn btn-icon btn-primary" aria-label="add"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+          <button class="btn btn-icon btn-green" aria-label="check"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></button>
+          <button class="btn btn-icon btn-secondary" aria-label="fav"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10Z"/></svg></button>
+          <button class="btn btn-icon btn-dark" aria-label="cart"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 2-1.5L21 8H6"/><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg></button>
+          <button class="btn btn-icon" style="background:var(--cream); color:var(--wine); border:1px solid var(--cream-deep)" aria-label="share"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="12" r="2.2"/><circle cx="18" cy="6" r="2.2"/><circle cx="18" cy="18" r="2.2"/><path d="m8 11 8-4M8 13l8 4"/></svg></button>
+        </div>
+      </div>
+
+      <div class="panel third">
+        <div class="panel-head"><h3>состояния</h3><span>primary · green</span></div>
+        <div style="display:grid; gap:10px;">
+          <button class="btn btn-primary" style="width:100%">default</button>
+          <button class="btn btn-primary" style="width:100%; background:var(--burgundy)">hover</button>
+          <button class="btn btn-primary" style="width:100%; background:var(--burgundy); transform:translateY(1px)">pressed</button>
+          <button class="btn btn-primary" style="width:100%; opacity:.4" disabled>disabled</button>
+          <button class="btn btn-green" style="width:100%">default · green</button>
+          <button class="btn btn-green" style="width:100%; background:var(--pine)">hover · green</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 · DISH CARD -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">04 / components</div>
+      <h2 class="sec-title">карточка блюда</h2>
+      <div class="sec-sub">hero · list · grid</div>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="comp-grid">
+      <div class="panel third">
+        <div class="panel-head"><h3>крупная</h3><span>рекомендация</span></div>
+        <div class="dish-card" style="padding:4px;">
+          <div class="dish-media" style="aspect-ratio: 4/3;">
+            <span class="dish-tag">новинка</span>
+            <span class="dish-fav"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8A1B26" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10Z"/></svg></span>
+            <img src="assets/dish-grill.png" alt="">
+          </div>
+          <h3 class="dish-title" style="font-size:22px;">овощи на мангале</h3>
+          <div class="dish-meta">300 г <span class="dotsep"></span> 15 мин <span class="dotsep"></span> 420 ккал</div>
+          <div class="dish-foot">
+            <span class="dish-price">690 <small>₽</small></span>
+            <button class="btn btn-green btn-sm">в корзину</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel third">
+        <div class="panel-head"><h3>стандарт</h3><span>каталог</span></div>
+        <div class="dish-grid">
+          <div class="dish-card">
+            <div class="dish-media">
+              <span class="dish-fav"><svg width="14" height="14" viewBox="0 0 24 24" fill="#8A1B26" stroke="#8A1B26" stroke-width="1.8" stroke-linejoin="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10Z"/></svg></span>
+              <img src="assets/dish-shurpa.png" alt="">
+            </div>
+            <h3 class="dish-title">шурпа из баранины</h3>
+            <div class="dish-meta">500 г · острое</div>
+            <div class="dish-foot">
+              <span class="dish-price">780 <small>₽</small></span>
+              <button class="dish-add" aria-label="add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+            </div>
+          </div>
+          <div class="dish-card">
+            <div class="dish-media">
+              <span class="dish-tag" style="background:var(--forest)">хит</span>
+              <img src="assets/dish-meat.png" alt="">
+            </div>
+            <h3 class="dish-title">мясо по-королевски</h3>
+            <div class="dish-meta">350 г · гарнир</div>
+            <div class="dish-foot">
+              <span class="dish-price">920 <small>₽</small></span>
+              <button class="dish-add" aria-label="add"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel third">
+        <div class="panel-head"><h3>список</h3><span>быстрый заказ</span></div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="display:grid; grid-template-columns: 72px 1fr auto; gap:12px; align-items:center; padding:8px 10px 8px 0;">
+            <div style="width:72px; height:72px; display:grid; place-items:center; overflow:visible;">
+              <img src="assets/dish-chicken.png" style="width:120%; height:120%; object-fit:contain; filter:drop-shadow(0 8px 10px rgba(90,16,20,.24));" />
+            </div>
+            <div>
+              <div style="font-family:'Alice',serif; font-size:16px; color:var(--ink-900);">курица с лепёшкой</div>
+              <div style="font-size:12px; color:var(--ink-500); margin-top:2px;">400 г · 20 мин</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Alice',serif; font-size:18px; color:var(--wine);">750 ₽</div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 72px 1fr auto; gap:12px; align-items:center; padding:8px 10px 8px 0;">
+            <div style="width:72px; height:72px; display:grid; place-items:center; overflow:visible;">
+              <img src="assets/dish-shurpa.png" style="width:120%; height:120%; object-fit:contain; filter:drop-shadow(0 8px 10px rgba(90,16,20,.24));" />
+            </div>
+            <div>
+              <div style="font-family:'Alice',serif; font-size:16px; color:var(--ink-900);">шурпа</div>
+              <div style="font-size:12px; color:var(--ink-500); margin-top:2px;">500 г · острое</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Alice',serif; font-size:18px; color:var(--wine);">780 ₽</div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 72px 1fr auto; gap:12px; align-items:center; padding:8px 10px 8px 0;">
+            <div style="width:72px; height:72px; display:grid; place-items:center; overflow:visible;">
+              <img src="assets/dish-grill.png" style="width:120%; height:120%; object-fit:contain; filter:drop-shadow(0 8px 10px rgba(90,16,20,.24));" />
+            </div>
+            <div>
+              <div style="font-family:'Alice',serif; font-size:16px; color:var(--ink-900);">овощи гриль</div>
+              <div style="font-size:12px; color:var(--ink-500); margin-top:2px;">300 г · 15 мин</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-family:'Alice',serif; font-size:18px; color:var(--wine);">690 ₽</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 · WEIGHT SLIDER -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">05 / components</div>
+      <h2 class="sec-title">ползунок веса</h2>
+      <div class="sec-sub">тяните кругляшок · пересчёт цены налету</div>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="comp-grid">
+      <div class="panel full">
+        <div class="panel-head"><h3>интерактивный компонент</h3><span>тяните кругляшок · шаг 10 г</span></div>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+
+          <div class="weight">
+            <div class="weight-head">
+              <h4>плов</h4>
+              <span class="price" data-price>450 ₽</span>
+            </div>
+            <div class="slider" data-min="50" data-max="800" data-step="10" data-value="150" data-rate="3" data-unit="г">
+              <div class="slider-rail"><div class="slider-fill"></div></div>
+              <div class="slider-thumb"><div class="slider-bubble" data-bubble>150 г</div></div>
+            </div>
+            <div class="weight-foot">
+              <span>выбрано</span>
+              <span><b data-value>150 г</b></span>
+            </div>
+          </div>
+
+          <div class="weight">
+            <div class="weight-head">
+              <h4>шашлык</h4>
+              <span class="price" data-price>1 080 ₽</span>
+            </div>
+            <div class="slider" data-min="100" data-max="1000" data-step="25" data-value="300" data-rate="3.6" data-unit="г">
+              <div class="slider-rail"><div class="slider-fill"></div></div>
+              <div class="slider-thumb"><div class="slider-bubble" data-bubble>300 г</div></div>
+            </div>
+            <div class="weight-foot">
+              <span>выбрано</span>
+              <span><b data-value>300 г</b></span>
+            </div>
+          </div>
+
+          <div class="weight">
+            <div class="weight-head">
+              <h4>салат</h4>
+              <span class="price" data-price>900 ₽</span>
+            </div>
+            <div class="slider" data-min="100" data-max="600" data-step="10" data-value="500" data-rate="1.8" data-unit="г">
+              <div class="slider-rail"><div class="slider-fill"></div></div>
+              <div class="slider-thumb"><div class="slider-bubble" data-bubble>500 г</div></div>
+            </div>
+            <div class="weight-foot">
+              <span>выбрано</span>
+              <span><b data-value>500 г</b></span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 20px; padding: 14px 16px; background: var(--cream); border-radius: 14px; font-size: 12px; color: var(--ink-700); letter-spacing: .02em;">
+          <b style="font-family: 'Alice', serif; font-weight: 400; font-size: 14px; color: var(--ink-900);">поведение.</b> кругляшок тянется по рельсу одним пальцем, вес меняется непрерывно. Над кругляшком появляется пузырёк с текущим значением, цена в шапке пересчитывается на лету.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 · TAB BAR + STORIES -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">06 / components</div>
+      <h2 class="sec-title">навигация · сторис</h2>
+      <div class="sec-sub">tab bar · stories strip</div>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="comp-grid">
+      <div class="panel">
+        <div class="panel-head"><h3>таб-бар</h3><span>5 разделов</span></div>
+        <div class="tabbar">
+          <div class="tab active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg>
+            <span>меню</span>
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <span>поиск</span>
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18l-2 12H5z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+            <span>корзина</span>
+            <span class="tab-badge">3</span>
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z"/><path d="M12 8v4l3 2"/></svg>
+            <span>заказы</span>
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+            <span>профиль</span>
+          </div>
+        </div>
+        <p class="body-sm" style="margin-top:14px;">Активный раздел — тёмно-вишнёвая точка над иконкой и кремовый фон. Бейдж на корзине — ярко-алый <code style="font-family:'JetBrains Mono',monospace; font-size:12px;">#B72336</code>.</p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3>сторис-лента</h3><span>72 px · conic-ring</span></div>
+        <div class="stories">
+          <div class="story">
+            <div class="story-ring"><div class="story-img"><img src="assets/dish-grill.png" alt=""></div></div>
+            <div class="story-label">овощи гриль</div>
+          </div>
+          <div class="story">
+            <div class="story-ring"><div class="story-img"><img src="assets/dish-shurpa.png" alt=""></div></div>
+            <div class="story-label">шурпа</div>
+          </div>
+          <div class="story">
+            <div class="story-ring"><div class="story-img flat"><b>−20%</b></div></div>
+            <div class="story-label">скидка дня</div>
+          </div>
+          <div class="story">
+            <div class="story-ring seen"><div class="story-img"><img src="assets/dish-chicken.png" alt=""></div></div>
+            <div class="story-label">курица</div>
+          </div>
+          <div class="story">
+            <div class="story-ring seen"><div class="story-img flat2"><b>ид</b></div></div>
+            <div class="story-label">ифтар</div>
+          </div>
+          <div class="story">
+            <div class="story-ring seen"><div class="story-img"><img src="assets/dish-meat.png" alt=""></div></div>
+            <div class="story-label">мясное</div>
+          </div>
+          <div class="story">
+            <div class="story-ring seen"><div class="story-img flat3"><b>✦</b></div></div>
+            <div class="story-label">подарок</div>
+          </div>
+        </div>
+        <p class="body-sm" style="margin-top:14px;">Непросмотренные — золотисто-вишнёвое кольцо. Просмотренные — ink-200. Для промо-слотов — плоские заливки из палитры.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 · BANNER + TILES -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">07 / components</div>
+      <h2 class="sec-title">баннер · плитки-ярлыки</h2>
+      <div class="sec-sub">slider · category tiles</div>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="comp-grid">
+      <div class="panel twothird">
+        <div class="panel-head"><h3>баннер-слайдер</h3><span>акции · сезон · новинки</span></div>
+        <div style="display:grid; gap: 14px;">
+          <div class="banner red">
+            <div>
+              <div class="banner-kicker">сезон плова</div>
+              <h3 class="banner-title">казан<br/>по-домашнему</h3>
+            </div>
+            <span class="banner-cta">попробовать</span>
+            <div class="banner-deco"></div>
+            <img class="banner-dish" src="assets/dish-meat.png" alt="">
+            <div class="banner-dots"><i class="on"></i><i></i><i></i></div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <div class="banner green small" style="height:180px">
+              <div>
+                <div class="banner-kicker">−25%</div>
+                <h3 class="banner-title" style="font-size:24px">сад<br/>на тарелке</h3>
+              </div>
+              <span class="banner-cta" style="background:var(--cream); color:var(--pine)">смотреть</span>
+              <div class="banner-deco"></div>
+              <img class="banner-dish" src="assets/dish-dolma.png" alt="">
+            </div>
+            <div class="banner ink small" style="height:180px">
+              <div>
+                <div class="banner-kicker">новинка</div>
+                <h3 class="banner-title" style="font-size:24px">ночь специй</h3>
+              </div>
+              <span class="banner-cta">открыть</span>
+              <div class="banner-deco"></div>
+              <img class="banner-dish" src="assets/dish-noodles.png" alt="">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel third">
+        <div class="panel-head"><h3>плитки-ярлыки</h3><span>категории меню</span></div>
+        <div class="tiles">
+          <div class="tile wine">
+            <div class="tile-ornament"></div>
+            <div class="tile-ornament two"></div>
+            <span>горячее</span>
+            <div><div class="count">24</div><h4>из казана</h4></div>
+          </div>
+          <div class="tile green">
+            <div class="tile-ornament"></div>
+            <div class="tile-ornament two"></div>
+            <span>салаты</span>
+            <div><div class="count">12</div><h4>свежий сад</h4></div>
+          </div>
+          <div class="tile sand">
+            <div class="tile-ornament"></div>
+            <div class="tile-ornament two"></div>
+            <span>выпечка</span>
+            <div><div class="count">8</div><h4>из тандыра</h4></div>
+          </div>
+          <div class="tile ink">
+            <div class="tile-ornament"></div>
+            <div class="tile-ornament two"></div>
+            <span>напитки</span>
+            <div><div class="count">16</div><h4>чайхана</h4></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 · BOTTOM SHEET -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">08 / components</div>
+      <h2 class="sec-title">bottom sheet</h2>
+      <div class="sec-sub">состав · вес · добавить</div>
+      <div class="sec-rule"></div>
+    </div>
+
+    <div class="comp-grid">
+      <div class="panel twothird" style="background: linear-gradient(180deg, var(--cream-soft), var(--cream)); border-color: var(--cream-deep);">
+        <div class="panel-head"><h3>карточка блюда</h3><span>modal · 90% viewport</span></div>
+        <div class="phone" style="background:transparent; border:0; padding: 0; box-shadow:none;">
+          <div class="sheet">
+            <div class="sheet-grab"></div>
+            <div class="sheet-hero">
+              <img src="assets/dish-shashlik.png" alt="">
+              <span class="sheet-hero-tag">хит</span>
+            </div>
+            <div class="sheet-head">
+              <div>
+                <h3>шашлык из молодого барашка</h3>
+                <div style="font-size:12px; color:var(--ink-500); margin-top:4px; letter-spacing: .12em; text-transform: lowercase;">с морковью по-корейски и зеленью</div>
+              </div>
+              <span class="sheet-price" data-price>1 080 ₽</span>
+            </div>
+            <p class="sheet-desc">Рёбрышки молодого барашка, маринованные в луке и специях, на углях. Подаются с морковью по-корейски, маринованным луком и свежей зеленью.</p>
+
+            <div style="margin: 6px 0 14px;">
+              <div style="font-family:'Alice',serif; font-weight:400; font-size:16px; margin-bottom:18px;">порция</div>
+              <div class="slider" data-min="150" data-max="800" data-step="10" data-value="300" data-rate="3.6" data-unit="г">
+                <div class="slider-rail"><div class="slider-fill"></div></div>
+                <div class="slider-thumb"><div class="slider-bubble" data-bubble>300 г</div></div>
+              </div>
+              <div class="weight-foot" style="margin-top:10px;">
+                <span>выбрано</span>
+                <span><b data-value>300 г</b></span>
+              </div>
+            </div>
+
+            <div class="sheet-opts">
+              <button class="btn btn-pill on">острый соус</button>
+              <button class="btn btn-pill">лаваш</button>
+              <button class="btn btn-pill">лук</button>
+              <button class="btn btn-pill">морковь</button>
+            </div>
+
+            <div class="sheet-cta">
+              <button class="btn btn-secondary">в избранное</button>
+              <button class="btn btn-green" data-cta>добавить — 1 080 ₽</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel third">
+        <div class="panel-head"><h3>анатомия</h3><span>структура</span></div>
+        <ol style="padding-left: 20px; margin: 0; color: var(--ink-700); line-height: 1.7; font-size: 14px;">
+          <li><b style="color:var(--ink-900); font-family:'Alice',serif; font-weight:400;">grab handle.</b> 44×4 px, ink-200.</li>
+          <li><b style="color:var(--ink-900); font-family:'Alice',serif; font-weight:400;">hero без подложки.</b> блюдо на 120% ширины выезжает за правый край, медленно вращается (120 с полный оборот) — взгляд утыкается в еду.</li>
+          <li><b style="color:var(--ink-900); font-family:'Alice',serif; font-weight:400;">павлин-фон.</b> opacity 16%, позади блюда — ненавязчивый орнамент.</li>
+          <li><b style="color:var(--ink-900); font-family:'Alice',serif; font-weight:400;">title + price.</b> alice 24 / alice 24 wine. один ряд.</li>
+          <li><b style="color:var(--ink-900); font-family:'Alice',serif; font-weight:400;">описание.</b> Roboto Flex 13, ink-700, с прописной.</li>
+          <li><b style="color:var(--ink-900); font-family:'Alice',serif; font-weight:400;">ползунок веса.</b> без подложки, прямо на фоне шита.</li>
+          <li><b style="color:var(--ink-900); font-family:'Alice',serif; font-weight:400;">опции.</b> pills, toggle.</li>
+          <li><b style="color:var(--ink-900); font-family:'Alice',serif; font-weight:400;">cta.</b> secondary + green на всю ширину.</li>
+        </ol>
+
+        <div class="ornament-rule"></div>
+        <div class="inline-codes">
+          <span>radius 28 28 0 0</span>
+          <span>shadow -18 40 -24</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 09 · RADIUS & SHADOWS (bonus) -->
+  <section>
+    <div class="sec-head">
+      <div class="sec-num">09 / tokens</div>
+      <h2 class="sec-title">радиусы · тени</h2>
+      <div class="sec-sub">scale</div>
+      <div class="sec-rule"></div>
+    </div>
+    <div class="comp-grid">
+      <div class="panel twothird">
+        <div class="panel-head"><h3>радиусы</h3><span>xs → full</span></div>
+        <div style="display:grid; grid-template-columns: repeat(6, 1fr); gap: 16px;">
+          <div style="text-align:center">
+            <div style="height:80px; background: var(--cream); border: 1px solid var(--cream-deep); border-radius: 6px; margin-bottom:8px;"></div>
+            <div class="caption">xs · 6</div>
+          </div>
+          <div style="text-align:center">
+            <div style="height:80px; background: var(--cream); border: 1px solid var(--cream-deep); border-radius: 10px; margin-bottom:8px;"></div>
+            <div class="caption">sm · 10</div>
+          </div>
+          <div style="text-align:center">
+            <div style="height:80px; background: var(--cream); border: 1px solid var(--cream-deep); border-radius: 16px; margin-bottom:8px;"></div>
+            <div class="caption">md · 16</div>
+          </div>
+          <div style="text-align:center">
+            <div style="height:80px; background: var(--cream); border: 1px solid var(--cream-deep); border-radius: 22px; margin-bottom:8px;"></div>
+            <div class="caption">lg · 22</div>
+          </div>
+          <div style="text-align:center">
+            <div style="height:80px; background: var(--cream); border: 1px solid var(--cream-deep); border-radius: 28px; margin-bottom:8px;"></div>
+            <div class="caption">xl · 28</div>
+          </div>
+          <div style="text-align:center">
+            <div style="height:80px; background: var(--cream); border: 1px solid var(--cream-deep); border-radius: 999px; margin-bottom:8px;"></div>
+            <div class="caption">full</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel third">
+        <div class="panel-head"><h3>тени</h3><span>card · dish</span></div>
+        <div style="display:grid; gap:18px;">
+          <div style="height:80px; background: var(--white); border-radius: 18px; box-shadow: var(--card-shadow); display:grid; place-items:center; font-size:12px; color:var(--ink-500); letter-spacing:.12em; text-transform:lowercase">card shadow</div>
+          <div style="height:80px; background: var(--white); border-radius: 18px; box-shadow: var(--dish-shadow); display:grid; place-items:center; font-size:12px; color:var(--ink-500); letter-spacing:.12em; text-transform:lowercase">dish shadow</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <div class="footnote">
+    <div>
+      <b>сказка востока · design system v1.1</b>
+      <span>alice + roboto flex · 8-point grid · mobile web</span>
+    </div>
+    <div style="font-family: 'Alice', serif; font-size: 22px; color: var(--sand);">◆ ✦ ◆</div>
+  </div>
+</div>
+
+<script>
+  // Continuous drag weight slider
+  document.querySelectorAll('.slider').forEach(slider => {
+    const min  = parseFloat(slider.dataset.min);
+    const max  = parseFloat(slider.dataset.max);
+    const step = parseFloat(slider.dataset.step);
+    const rate = parseFloat(slider.dataset.rate); // ₽ per g
+    const unit = slider.dataset.unit || 'г';
+    let value  = parseFloat(slider.dataset.value);
+
+    const fill    = slider.querySelector('.slider-fill');
+    const thumb   = slider.querySelector('.slider-thumb');
+    const bubble  = slider.querySelector('[data-bubble]');
+    const weight  = slider.closest('.weight') || slider.closest('.sheet');
+    const priceEl = weight && weight.querySelector('[data-price]');
+    const ctaEl   = weight && weight.querySelector('[data-cta]');
+    const valueEls = weight ? [...weight.querySelectorAll('[data-value]')].filter(el => !el.classList.contains('slider')) : [];
+    const scaleEl = weight && weight.querySelector('.slider-scale');
+    const scaleSpans = scaleEl ? [...scaleEl.querySelectorAll('span')] : [];
+
+    const fmt = (v) => v + ' ' + unit;
+
+    const render = () => {
+      const pct = (value - min) / (max - min);
+      const clampedPct = Math.max(0, Math.min(1, pct));
+      fill.style.width = (clampedPct * 100) + '%';
+      thumb.style.left = (clampedPct * 100) + '%';
+      if (bubble) bubble.textContent = fmt(value);
+      const price = Math.round(value * rate / 10) * 10;
+      const priceStr = price.toLocaleString('ru-RU') + ' ₽';
+      if (priceEl) priceEl.textContent = priceStr;
+      if (ctaEl) ctaEl.textContent = 'добавить — ' + priceStr;
+      valueEls.forEach(el => { el.textContent = fmt(value); });
+      if (scaleSpans.length) {
+        scaleSpans.forEach(s => {
+          const j = parseFloat(s.dataset.jump);
+          s.classList.toggle('near', Math.abs(j - value) <= step * 1.5);
+        });
+      }
+    };
+
+    const setFromClientX = (clientX) => {
+      const rail = slider.querySelector('.slider-rail').getBoundingClientRect();
+      const pct = (clientX - rail.left) / rail.width;
+      const clamped = Math.max(0, Math.min(1, pct));
+      const raw = min + clamped * (max - min);
+      value = Math.round(raw / step) * step;
+      value = Math.max(min, Math.min(max, value));
+      render();
+    };
+
+    let dragging = false;
+    const onDown = (e) => {
+      dragging = true;
+      slider.classList.add('dragging');
+      slider.setPointerCapture && slider.setPointerCapture(e.pointerId);
+      setFromClientX(e.clientX);
+      e.preventDefault();
+    };
+    const onMove = (e) => {
+      if (!dragging) return;
+      setFromClientX(e.clientX);
+    };
+    const onUp = (e) => {
+      if (!dragging) return;
+      dragging = false;
+      slider.classList.remove('dragging');
+      try { slider.releasePointerCapture && slider.releasePointerCapture(e.pointerId); } catch(_){}
+    };
+
+    slider.addEventListener('pointerdown', onDown);
+    slider.addEventListener('pointermove', onMove);
+    slider.addEventListener('pointerup', onUp);
+    slider.addEventListener('pointercancel', onUp);
+    slider.addEventListener('pointerleave', onUp);
+
+    // Quick-jump to popular values
+    scaleSpans.forEach(s => {
+      s.addEventListener('click', () => {
+        value = parseFloat(s.dataset.jump);
+        slider.classList.add('dragging');
+        render();
+        setTimeout(() => slider.classList.remove('dragging'), 700);
+      });
+    });
+
+    render();
+  });
+</script>
+</body>
+</html>
