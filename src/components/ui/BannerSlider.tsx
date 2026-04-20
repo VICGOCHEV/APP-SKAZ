@@ -111,8 +111,6 @@ export default function BannerSlider({
                 className="pointer-events-none absolute -top-[32px] right-[-12px] z-20 h-[212px] w-[212px] object-contain"
                 style={{
                   animation: 'sheet-dish-spin 60s linear infinite',
-                  filter:
-                    'drop-shadow(0 22px 28px rgba(0,0,0,0.45)) drop-shadow(0 8px 12px rgba(0,0,0,0.28))',
                 }}
               />
             )}
