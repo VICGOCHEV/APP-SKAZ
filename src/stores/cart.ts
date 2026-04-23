@@ -11,18 +11,31 @@ type AddOpts = {
 type CartStore = {
   items: CartItem[];
   addDish: (dish: Dish, opts?: AddOpts) => void;
+  setQuantity: (index: number, dish: Dish, quantity: number) => void;
+  setWeight: (index: number, dish: Dish, weight: number) => void;
   removeAt: (index: number) => void;
   updateAt: (index: number, patch: Partial<CartItem>) => void;
   clear: () => void;
 };
 
-function computePrice(dish: Dish, quantity: number, weight?: number): number {
+function computePrice(
+  dish: Dish,
+  quantity: number,
+  weight?: number,
+  modifiers?: string[],
+): number {
+  let base: number;
   if (dish.isWeighted) {
     const w = weight ?? dish.baseWeight;
     const perGram = dish.price / dish.baseWeight;
-    return Math.round((perGram * w) / 10) * 10;
+    base = Math.round((perGram * w) / 10) * 10;
+  } else {
+    base = dish.price * quantity;
   }
-  return dish.price * quantity;
+  const modifierDelta = (modifiers ?? [])
+    .map((id) => dish.modifiers.find((m) => m.id === id)?.priceDelta ?? 0)
+    .reduce((a, b) => a + b, 0);
+  return base + modifierDelta * quantity;
 }
 
 function sameInstance(a: CartItem, b: Pick<CartItem, 'dishId' | 'weight' | 'modifiers'>): boolean {
@@ -51,7 +64,7 @@ export const useCartStore = create<CartStore>()(
             next[existingIndex] = {
               ...it,
               quantity: nextQty,
-              price: computePrice(dish, nextQty, it.weight),
+              price: computePrice(dish, nextQty, it.weight, it.modifiers),
             };
             return { items: next };
           }
@@ -64,10 +77,35 @@ export const useCartStore = create<CartStore>()(
                 quantity,
                 weight,
                 modifiers,
-                price: computePrice(dish, quantity, weight),
+                price: computePrice(dish, quantity, weight, modifiers),
               },
             ],
           };
+        }),
+      setQuantity: (index, dish, quantity) =>
+        set((state) => {
+          if (quantity < 1) return state;
+          const it = state.items[index];
+          if (!it) return state;
+          const next = [...state.items];
+          next[index] = {
+            ...it,
+            quantity,
+            price: computePrice(dish, quantity, it.weight, it.modifiers),
+          };
+          return { items: next };
+        }),
+      setWeight: (index, dish, weight) =>
+        set((state) => {
+          const it = state.items[index];
+          if (!it) return state;
+          const next = [...state.items];
+          next[index] = {
+            ...it,
+            weight,
+            price: computePrice(dish, it.quantity, weight, it.modifiers),
+          };
+          return { items: next };
         }),
       removeAt: (index) =>
         set((state) => ({ items: state.items.filter((_, i) => i !== index) })),

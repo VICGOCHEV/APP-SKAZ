@@ -8,6 +8,7 @@ import WeightSlider from '@/components/ui/WeightSlider';
 import Skeleton from '@/components/ui/Skeleton';
 import QuantityStepper from '@/components/ui/QuantityStepper';
 import { useDish } from '@/hooks/queries/useDishes';
+import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/formatPrice';
 import { formatWeight } from '@/lib/formatWeight';
 import { cn } from '@/lib/cn';
@@ -21,6 +22,7 @@ export default function DishSheet() {
   const location = useLocation();
   const { id } = useParams();
   const { data: dish, isPending, error } = useDish(id);
+  const { addDish } = useCart();
 
   const [weight, setWeight] = useState(dish?.baseWeight ?? 200);
   const [qty, setQty] = useState(1);
@@ -234,7 +236,21 @@ export default function DishSheet() {
 
           <div className="grid grid-cols-2 gap-2.5 pt-2">
             <Button variant="secondary">в избранное</Button>
-            <Button variant="green" disabled={!dish.isAvailable}>
+            <Button
+              variant="green"
+              disabled={!dish.isAvailable}
+              onClick={() => {
+                const activeModifiers = dish.modifiers
+                  .filter((m) => selectedModifiers.has(m.id) || (!selectedModifiers.size && m.default))
+                  .map((m) => m.id);
+                addDish(dish, {
+                  quantity: dish.isWeighted ? 1 : qty,
+                  weight: dish.isWeighted ? weight : undefined,
+                  modifiers: activeModifiers,
+                });
+                close();
+              }}
+            >
               добавить — {formatPrice(priceNow)}
             </Button>
           </div>
