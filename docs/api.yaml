@@ -1,0 +1,79 @@
+openapi: 3.0.0
+info:
+  title: 'East fairy tail'
+  description: 'East fairy tail api'
+  version: '1.0'
+servers:
+  - url: /api/v1
+
+# See /src/api/schema.ts for the frontend's subset of types we actually use.
+# Full spec here — trimmed intentionally for reference. The source-of-truth
+# spec lives on the backend side (see progger).
+
+paths:
+  /products:
+    get:
+      tags: [Products]
+      operationId: GetAllProducts
+  /products/{product}:
+    get:
+      tags: [Products]
+      operationId: GetProductById
+  /products/category/{category}:
+    get:
+      tags: [Products]
+      operationId: GetProductsByCategory
+  /categories:
+    get:
+      tags: [Categories]
+      operationId: GetAllCategories
+  /banners:
+    get:
+      tags: [Banners]
+      operationId: GetBanners
+  /cart:
+    get:
+      operationId: GetCart
+    post:
+      operationId: AddToCart
+    delete:
+      operationId: RemoveFromCart
+  /addresses:
+    get:
+      operationId: GetAddresses
+    post:
+      operationId: CreateAddress
+  /addresses/check:
+    post:
+      operationId: CheckAddress
+  /orders:
+    get:
+      operationId: GetAllOrders
+    post:
+      operationId: CreateOrders
+  /orders/{order}:
+    get:
+      operationId: GetOrderById
+    post:
+      operationId: RepeatOrders
+  /payments/{order}/success:
+    post:
+      operationId: PaymentSuccess
+  /payments/{order}/failed:
+    post:
+      operationId: PaymentFailed
+  /settings:
+    get:
+      operationId: GetSettingsList
+  /login:
+    post:
+      operationId: Login
+  /logout:
+    post:
+      operationId: Logout
+  /register:
+    post:
+      operationId: Register
+  /me:
+    get:
+      operationId: GetMe
