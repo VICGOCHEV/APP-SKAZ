@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { motion, type HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/lib/cn';
 
 export type ButtonVariant =
@@ -13,13 +14,15 @@ export type ButtonVariant =
 
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
-export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type BaseProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
 };
+
+export type ButtonProps = BaseProps;
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
@@ -57,11 +60,13 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   ref,
 ) {
   return (
-    <button
+    <motion.button
       ref={ref}
+      whileTap={disabled ? undefined : { scale: 0.97 }}
+      transition={{ type: 'spring', damping: 20, stiffness: 500 }}
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-full font-semibold tracking-[0.01em] whitespace-nowrap',
-        'transition-[transform,background-color,box-shadow,color] duration-150 active:translate-y-[1px]',
+        'transition-[background-color,box-shadow,color] duration-150',
         'disabled:cursor-not-allowed disabled:opacity-40',
         variantClasses[variant],
         sizeClasses[size],
@@ -69,12 +74,12 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
         className,
       )}
       disabled={disabled}
-      {...rest}
+      {...(rest as HTMLMotionProps<'button'>)}
     >
       {leftIcon}
       {children}
       {rightIcon}
-    </button>
+    </motion.button>
   );
 });
 

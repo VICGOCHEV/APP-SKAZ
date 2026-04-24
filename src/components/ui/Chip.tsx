@@ -1,4 +1,5 @@
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { motion, type HTMLMotionProps } from 'framer-motion';
 import { cn } from '@/lib/cn';
 
 export type ChipVariant = 'solid' | 'outline';
@@ -21,25 +22,28 @@ const variantClasses: Record<ChipVariant, { active: string; inactive: string }> 
 };
 
 const Chip = forwardRef<HTMLButtonElement, ChipProps>(function Chip(
-  { active, variant = 'solid', className, children, ...rest },
+  { active, variant = 'solid', className, children, disabled, ...rest },
   ref,
 ) {
   const v = variantClasses[variant];
   return (
-    <button
+    <motion.button
       ref={ref}
       type="button"
       aria-pressed={active}
+      whileTap={disabled ? undefined : { scale: 0.94 }}
+      transition={{ type: 'spring', damping: 20, stiffness: 500 }}
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-medium',
         'transition-colors duration-150',
         active ? v.active : v.inactive,
         className,
       )}
-      {...rest}
+      disabled={disabled}
+      {...(rest as HTMLMotionProps<'button'>)}
     >
       {children}
-    </button>
+    </motion.button>
   );
 });
 

@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 
 export type TabBarItem = {
@@ -29,35 +30,61 @@ export default function TabBar({ items, activeKey, onSelect, className }: TabBar
       {items.map((item) => {
         const active = item.key === activeKey;
         return (
-          <button
+          <motion.button
             key={item.key}
             type="button"
             onClick={() => onSelect(item.key)}
             aria-current={active ? 'page' : undefined}
+            whileTap={{ scale: 0.92 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 500 }}
             className={cn(
               'relative flex flex-col items-center justify-center gap-1 rounded-md py-2.5',
-              'transition-colors duration-150',
-              active ? 'bg-cream text-wine' : 'text-ink-500 hover:text-ink-700',
+              'transition-colors duration-200',
+              active ? 'text-wine' : 'text-ink-500 hover:text-ink-700',
             )}
           >
+            {/* Sliding active background */}
             {active && (
-              <span
+              <motion.span
+                layoutId="tabbar-active"
                 aria-hidden
-                className="absolute top-0.5 h-1 w-1 rounded-full bg-wine"
+                className="absolute inset-0 rounded-md bg-cream"
+                transition={{ type: 'spring', damping: 28, stiffness: 420 }}
               />
             )}
-            <span className="flex h-[22px] w-[22px] items-center justify-center">
+            {active && (
+              <motion.span
+                layoutId="tabbar-active-dot"
+                aria-hidden
+                className="absolute top-0.5 h-1 w-1 rounded-full bg-wine"
+                transition={{ type: 'spring', damping: 28, stiffness: 420 }}
+              />
+            )}
+            <motion.span
+              className="relative flex h-[22px] w-[22px] items-center justify-center"
+              animate={active ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+              transition={{ duration: 0.3, ease: [0.22, 0.8, 0.3, 1] }}
+            >
               {item.icon}
-            </span>
-            <span className="text-[10px] font-medium uppercase tracking-[0.06em]">
+            </motion.span>
+            <span className="relative text-[10px] font-medium uppercase tracking-[0.06em]">
               {item.label}
             </span>
-            {item.badge !== undefined && item.badge > 0 && (
-              <span className="absolute top-1.5 right-[20%] rounded-full bg-crimson px-1.5 text-[9px] font-bold text-cream">
-                {item.badge}
-              </span>
-            )}
-          </button>
+            <AnimatePresence>
+              {item.badge !== undefined && item.badge > 0 && (
+                <motion.span
+                  key={item.badge}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 14, stiffness: 500 }}
+                  className="absolute top-1.5 right-[20%] rounded-full bg-crimson px-1.5 text-[9px] font-bold text-cream"
+                >
+                  {item.badge}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
         );
       })}
     </nav>

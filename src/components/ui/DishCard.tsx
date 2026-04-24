@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Heart, Plus } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { formatPrice } from '@/lib/formatPrice';
@@ -21,6 +23,30 @@ export type DishCardProps = {
   onClick?: () => void;
   className?: string;
 };
+
+function FadeImage({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <motion.img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onLoad={() => setLoaded(true)}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: loaded ? 1 : 0 }}
+      transition={{ duration: 0.35, ease: [0.22, 0.8, 0.3, 1] }}
+      className={className}
+    />
+  );
+}
 
 function PhotoFallback({ className }: { className?: string }) {
   return (
@@ -141,13 +167,16 @@ export default function DishCard({
             {tag.label}
           </span>
         )}
-        <button
+        <motion.button
           type="button"
           aria-label={favorited ? 'Убрать из избранного' : 'В избранное'}
           onClick={(e) => {
             e.stopPropagation();
             onToggleFavorite?.();
           }}
+          whileTap={{ scale: 0.85 }}
+          animate={favorited ? { scale: [1, 1.25, 1] } : { scale: 1 }}
+          transition={{ duration: 0.3, ease: [0.22, 0.8, 0.3, 1] }}
           className="absolute top-2 right-2 z-10 flex h-[34px] w-[34px] items-center justify-center rounded-full border border-cream-deep bg-white/85 backdrop-blur-[6px]"
         >
           <Heart
@@ -155,9 +184,9 @@ export default function DishCard({
             strokeWidth={1.8}
             className={cn('text-wine', favorited && 'fill-wine')}
           />
-        </button>
+        </motion.button>
         {photoUrl ? (
-          <img
+          <FadeImage
             src={photoUrl}
             alt={name}
             className={cn(
