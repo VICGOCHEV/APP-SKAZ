@@ -1,11 +1,14 @@
 import { createContext, useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import {
+  getMe,
+  loginWithEmail,
   loginWithTelegram,
   loginWithVk,
   logout as apiLogout,
-  requestSmsCode,
-  verifySmsCode,
+  register,
+  type RegisterInput,
 } from '@/api/auth';
+import { getAuthToken, USE_MOCKS } from '@/api/client';
 import { useEnvironment } from '@/hooks/useEnvironment';
 import { useUserStore } from '@/stores/user';
 import type { AuthStatus, User } from '@/types';
@@ -14,8 +17,8 @@ type AuthContextValue = {
   user: User | null;
   status: AuthStatus;
   error?: string;
-  requestSms: (phone: string) => Promise<void>;
-  verifySms: (phone: string, code: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (input: RegisterInput) => Promise<User>;
   logout: () => Promise<void>;
 };
 
@@ -24,61 +27,76 @@ export const AuthContext = createContext<AuthContextValue | undefined>(undefined
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { environment, isReady } = useEnvironment();
   const { user, status, error, setLoading, setUser, setError, clear } = useUserStore();
-  const autoLoginTried = useRef(false);
+  const bootstrapped = useRef(false);
 
   useEffect(() => {
-    if (!isReady) return;
-    if (autoLoginTried.current) return;
-    if (user) return;
-    if (environment !== 'tg' && environment !== 'vk') return;
+    if (!isReady || bootstrapped.current) return;
+    bootstrapped.current = true;
 
-    autoLoginTried.current = true;
-    (async () => {
-      setLoading();
-      try {
-        if (environment === 'tg') {
-          const initData = window.Telegram?.WebApp?.initData ?? '';
-          const tgUser = await loginWithTelegram(initData);
-          setUser(tgUser);
-        } else if (environment === 'vk') {
-          const vkUser = await loginWithVk();
-          setUser(vkUser);
+    // 1) TG/VK auto-login (mock-only for now)
+    if (USE_MOCKS && (environment === 'tg' || environment === 'vk') && !user) {
+      (async () => {
+        setLoading();
+        try {
+          if (environment === 'tg') {
+            const initData = window.Telegram?.WebApp?.initData ?? '';
+            setUser(await loginWithTelegram(initData));
+          } else {
+            setUser(await loginWithVk());
+          }
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Не удалось войти');
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Не удалось войти');
+      })();
+      return;
+    }
+
+    // 2) Real API: restore session via /me if token exists
+    if (!USE_MOCKS) {
+      if (!getAuthToken()) {
+        useUserStore.setState({ status: 'unauthenticated' });
+        return;
       }
-    })();
-  }, [environment, isReady, user, setLoading, setUser, setError]);
-
-  useEffect(() => {
-    if (!user && status === 'idle') {
-      useUserStore.setState({ status: 'unauthenticated' });
+      (async () => {
+        setLoading();
+        try {
+          setUser(await getMe());
+        } catch {
+          // Token invalid — client interceptor already cleared it
+          useUserStore.setState({ status: 'unauthenticated', user: null });
+        }
+      })();
+      return;
     }
-    if (user && status !== 'authenticated') {
-      useUserStore.setState({ status: 'authenticated' });
-    }
-  }, [user, status]);
 
-  const requestSms = useCallback(async (phone: string) => {
-    setLoading();
-    try {
-      await requestSmsCode(phone);
-      useUserStore.setState({ status: 'unauthenticated', error: undefined });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка отправки кода');
-      throw err;
-    }
-  }, [setLoading, setError]);
+    // 3) Mock web — stay anonymous until user explicitly logs in
+    if (!user) useUserStore.setState({ status: 'unauthenticated' });
+  }, [isReady, environment, user, setLoading, setUser, setError]);
 
-  const verifySms = useCallback(
-    async (phone: string, code: string) => {
+  const login = useCallback(
+    async (email: string, password: string) => {
       setLoading();
       try {
-        const nextUser = await verifySmsCode(phone, code);
-        setUser(nextUser);
-        return nextUser;
+        const u = await loginWithEmail(email, password);
+        setUser(u);
+        return u;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Неверный код');
+        setError(err instanceof Error ? err.message : 'Неверный логин или пароль');
+        throw err;
+      }
+    },
+    [setLoading, setUser, setError],
+  );
+
+  const registerFn = useCallback(
+    async (input: RegisterInput) => {
+      setLoading();
+      try {
+        const u = await register(input);
+        setUser(u);
+        return u;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Не удалось зарегистрироваться');
         throw err;
       }
     },
@@ -94,8 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [clear]);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user, status, error, requestSms, verifySms, logout }),
-    [user, status, error, requestSms, verifySms, logout],
+    () => ({ user, status, error, login, register: registerFn, logout }),
+    [user, status, error, login, registerFn, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

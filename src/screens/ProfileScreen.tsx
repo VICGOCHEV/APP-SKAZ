@@ -29,7 +29,7 @@ export default function ProfileScreen() {
             onClick={() => navigate('/login', { state: { from: '/profile' } })}
             className="rounded-full bg-forest px-6 py-3 text-[14px] font-semibold text-cream hover:bg-pine"
           >
-            войти по телефону
+            войти
           </button>
         </div>
       </div>
@@ -38,15 +38,19 @@ export default function ProfileScreen() {
 
   return (
     <div className="flex flex-col gap-4 pb-4">
-      <ScreenHeader variant="large" title={user.name ?? 'профиль'} subtitle={user.phone} />
+      <ScreenHeader
+        variant="large"
+        title={user.name ?? 'профиль'}
+        subtitle={user.email ?? user.phone ?? undefined}
+      />
       <div className="flex flex-col gap-4 px-4">
         <GroupedList
           title="контакт"
           items={[
             {
-              id: 'phone',
+              id: 'contact',
               icon: <User size={18} strokeWidth={1.6} />,
-              label: user.phone,
+              label: user.phone ?? user.email ?? 'не указан',
               description: 'изменить',
             },
           ]}

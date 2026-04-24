@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,21 +11,30 @@ import Logo from '@/components/ui/Logo';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import { useAuth } from '@/hooks/useAuth';
 
-const phoneSchema = z.object({
-  phone: z
-    .string()
-    .min(1, 'введите номер телефона')
-    .regex(/^\+7\s?\d{3}\s?\d{3}-?\d{2}-?\d{2}$/, 'формат: +7 900 555-14-23'),
+type Mode = 'login' | 'register';
+
+const loginSchema = z.object({
+  email: z.string().email('введите email'),
+  password: z.string().min(8, 'пароль — минимум 8 символов'),
 });
 
-const codeSchema = z.object({
-  code: z
-    .string()
-    .regex(/^\d{4}$/, 'код из 4 цифр'),
-});
+const registerSchema = z
+  .object({
+    name: z.string().min(2, 'введите имя'),
+    email: z.string().email('введите email'),
+    phone: z
+      .string()
+      .regex(/^\+7\s?\d{3}\s?\d{3}-?\d{2}-?\d{2}$/, 'формат: +7 900 555-14-23'),
+    password: z.string().min(8, 'минимум 8 символов'),
+    password_confirmation: z.string(),
+  })
+  .refine((v) => v.password === v.password_confirmation, {
+    path: ['password_confirmation'],
+    message: 'пароли не совпадают',
+  });
 
-type PhoneForm = z.infer<typeof phoneSchema>;
-type CodeForm = z.infer<typeof codeSchema>;
+type LoginForm = z.infer<typeof loginSchema>;
+type RegisterForm = z.infer<typeof registerSchema>;
 
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, '').replace(/^8/, '7').slice(0, 11);
@@ -44,147 +54,221 @@ function formatPhone(raw: string): string {
 export default function LoginScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { requestSms, verifySms } = useAuth();
-  const [step, setStep] = useState<'phone' | 'code'>('phone');
-  const [phone, setPhone] = useState('');
+  const { login, register } = useAuth();
+  const [mode, setMode] = useState<Mode>('login');
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const redirectTo = (location.state as { from?: string } | null)?.from ?? '/';
 
-  const phoneForm = useForm<PhoneForm>({
-    resolver: zodResolver(phoneSchema),
+  const loginForm = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
     mode: 'onBlur',
-    defaultValues: { phone: '' },
+    defaultValues: { email: '', password: '' },
   });
 
-  const codeForm = useForm<CodeForm>({
-    resolver: zodResolver(codeSchema),
+  const registerForm = useForm<RegisterForm>({
+    resolver: zodResolver(registerSchema),
     mode: 'onBlur',
-    defaultValues: { code: '' },
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      password_confirmation: '',
+    },
   });
 
-  const onSubmitPhone = phoneForm.handleSubmit(async ({ phone: value }) => {
+  const onLogin = loginForm.handleSubmit(async ({ email, password }) => {
     setSubmitError(null);
     try {
-      await requestSms(value);
-      setPhone(value);
-      setStep('code');
-    } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Ошибка отправки кода');
-    }
-  });
-
-  const onSubmitCode = codeForm.handleSubmit(async ({ code }) => {
-    setSubmitError(null);
-    try {
-      await verifySms(phone, code);
+      await login(email, password);
       navigate(redirectTo, { replace: true });
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Неверный код');
-      codeForm.setFocus('code');
+      setSubmitError(err instanceof Error ? err.message : 'Ошибка входа');
     }
   });
+
+  const onRegister = registerForm.handleSubmit(async (values) => {
+    setSubmitError(null);
+    try {
+      await register(values);
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Ошибка регистрации');
+    }
+  });
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setSubmitError(null);
+  };
+
+  const loginBusy = loginForm.formState.isSubmitting;
+  const registerBusy = registerForm.formState.isSubmitting;
 
   return (
     <div className="flex min-h-[100dvh] w-full max-w-[480px] flex-col bg-paper">
       <ScreenHeader
         variant="back"
-        title={step === 'phone' ? 'вход' : 'код из sms'}
-        onBack={() => (step === 'code' ? setStep('phone') : navigate(-1))}
+        title={mode === 'login' ? 'вход' : 'регистрация'}
+        onBack={() => navigate(-1)}
       />
-      <div className="flex flex-1 flex-col gap-6 px-5 pt-6 pb-10">
-        <div className="flex flex-col items-center gap-3 pt-4">
+
+      <div className="flex flex-1 flex-col gap-5 px-5 pt-6 pb-10">
+        <div className="flex flex-col items-center gap-3 pt-2">
           <Logo className="h-9 w-auto text-ink-900" />
           <p className="text-center text-[13px] text-ink-500">
-            {step === 'phone'
-              ? 'чтобы оформить заказ — введите номер телефона'
-              : `код отправлен на ${phone}. тестовый код — 1234`}
+            {mode === 'login'
+              ? 'войдите, чтобы оформить заказ и видеть историю'
+              : 'зарегистрируйтесь — начислим приветственные бонусы'}
           </p>
         </div>
 
-        {step === 'phone' ? (
-          <form onSubmit={onSubmitPhone} className="flex flex-col gap-4" noValidate>
-            <Input
-              label="телефон"
-              placeholder="+7 900 555-14-23"
-              inputMode="tel"
-              autoComplete="tel"
-              autoFocus
-              {...phoneForm.register('phone', {
-                onChange: (e) => {
-                  phoneForm.setValue('phone', formatPhone(e.target.value), {
-                    shouldValidate: false,
-                  });
-                },
-              })}
-              error={phoneForm.formState.errors.phone?.message}
-            />
-            {submitError && <p className="text-[13px] text-danger">{submitError}</p>}
-            <Button
-              type="submit"
-              variant="green"
-              fullWidth
-              disabled={phoneForm.formState.isSubmitting}
-              leftIcon={
-                phoneForm.formState.isSubmitting ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : null
-              }
-            >
-              отправить код
-            </Button>
-            <p className="text-center text-[11px] leading-relaxed text-ink-500">
-              нажимая «отправить код» вы соглашаетесь с условиями обработки персональных данных
-            </p>
-          </form>
-        ) : (
-          <form onSubmit={onSubmitCode} className="flex flex-col gap-4" noValidate>
-            <Input
-              label="код"
-              placeholder="1234"
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              autoFocus
-              maxLength={4}
-              {...codeForm.register('code', {
-                onChange: (e) => {
-                  const digits = e.target.value.replace(/\D/g, '').slice(0, 4);
-                  codeForm.setValue('code', digits, { shouldValidate: false });
-                  if (digits.length === 4) void onSubmitCode();
-                },
-              })}
-              error={codeForm.formState.errors.code?.message}
-            />
-            {submitError && <p className="text-[13px] text-danger">{submitError}</p>}
-            <Button
-              type="submit"
-              variant="green"
-              fullWidth
-              disabled={codeForm.formState.isSubmitting}
-              leftIcon={
-                codeForm.formState.isSubmitting ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : null
-              }
-            >
-              войти
-            </Button>
+        {/* Mode toggle */}
+        <div className="grid grid-cols-2 gap-1 rounded-full border border-ink-200 bg-white p-1 text-[13px] font-semibold">
+          {(['login', 'register'] as const).map((m) => (
             <button
+              key={m}
               type="button"
-              onClick={async () => {
-                setSubmitError(null);
-                try {
-                  await requestSms(phone);
-                } catch (err) {
-                  setSubmitError(err instanceof Error ? err.message : 'Ошибка');
-                }
-              }}
-              className="text-center text-[13px] text-wine hover:underline"
+              onClick={() => switchMode(m)}
+              className={
+                'relative rounded-full py-2.5 transition-colors ' +
+                (mode === m ? 'text-cream' : 'text-ink-500 hover:text-ink-900')
+              }
             >
-              отправить код ещё раз
+              {mode === m && (
+                <motion.span
+                  layoutId="auth-mode-pill"
+                  className="absolute inset-0 rounded-full bg-wine"
+                  transition={{ type: 'spring', damping: 28, stiffness: 380 }}
+                />
+              )}
+              <span className="relative">{m === 'login' ? 'вход' : 'регистрация'}</span>
             </button>
-          </form>
-        )}
+          ))}
+        </div>
+
+        <AnimatePresence mode="wait" initial={false}>
+          {mode === 'login' ? (
+            <motion.form
+              key="login"
+              onSubmit={onLogin}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-4"
+              noValidate
+            >
+              <Input
+                label="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                autoFocus
+                {...loginForm.register('email')}
+                error={loginForm.formState.errors.email?.message}
+              />
+              <Input
+                label="пароль"
+                type="password"
+                autoComplete="current-password"
+                placeholder="••••••••"
+                {...loginForm.register('password')}
+                error={loginForm.formState.errors.password?.message}
+              />
+              {submitError && <p className="text-[13px] text-danger">{submitError}</p>}
+              <Button
+                type="submit"
+                variant="green"
+                fullWidth
+                disabled={loginBusy}
+                leftIcon={loginBusy ? <Loader2 size={16} className="animate-spin" /> : undefined}
+              >
+                войти
+              </Button>
+              <button
+                type="button"
+                onClick={() => switchMode('register')}
+                className="text-center text-[13px] text-wine hover:underline"
+              >
+                нет аккаунта? зарегистрируйтесь
+              </button>
+            </motion.form>
+          ) : (
+            <motion.form
+              key="register"
+              onSubmit={onRegister}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col gap-4"
+              noValidate
+            >
+              <Input
+                label="имя"
+                placeholder="как к вам обращаться"
+                autoComplete="name"
+                autoFocus
+                {...registerForm.register('name')}
+                error={registerForm.formState.errors.name?.message}
+              />
+              <Input
+                label="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                {...registerForm.register('email')}
+                error={registerForm.formState.errors.email?.message}
+              />
+              <Input
+                label="телефон"
+                placeholder="+7 900 555-14-23"
+                inputMode="tel"
+                autoComplete="tel"
+                {...registerForm.register('phone', {
+                  onChange: (e) => {
+                    registerForm.setValue('phone', formatPhone(e.target.value), {
+                      shouldValidate: false,
+                    });
+                  },
+                })}
+                error={registerForm.formState.errors.phone?.message}
+              />
+              <Input
+                label="пароль"
+                type="password"
+                autoComplete="new-password"
+                placeholder="не менее 8 символов"
+                {...registerForm.register('password')}
+                error={registerForm.formState.errors.password?.message}
+              />
+              <Input
+                label="повторите пароль"
+                type="password"
+                autoComplete="new-password"
+                {...registerForm.register('password_confirmation')}
+                error={registerForm.formState.errors.password_confirmation?.message}
+              />
+              {submitError && <p className="text-[13px] text-danger">{submitError}</p>}
+              <Button
+                type="submit"
+                variant="green"
+                fullWidth
+                disabled={registerBusy}
+                leftIcon={
+                  registerBusy ? <Loader2 size={16} className="animate-spin" /> : undefined
+                }
+              >
+                зарегистрироваться
+              </Button>
+              <p className="text-center text-[11px] leading-relaxed text-ink-500">
+                нажимая «зарегистрироваться» вы соглашаетесь с условиями обработки персональных данных
+              </p>
+            </motion.form>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

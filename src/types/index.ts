@@ -127,8 +127,9 @@ export type Environment = 'tg' | 'vk' | 'max' | 'web';
 
 export type User = {
   id: string;
-  phone: string;
-  name?: string;
+  name: string;
+  email?: string;
+  phone?: string;
   avatarUrl?: string;
   bonusPoints: number;
 };

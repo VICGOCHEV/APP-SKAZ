@@ -4,8 +4,9 @@ import type {
   ApiModifierGroup,
   ApiNutrition,
   ApiProduct,
+  ApiUser,
 } from './schema';
-import type { Category, Dish, Modifier, Nutrients } from '@/types';
+import type { Category, Dish, Modifier, Nutrients, User } from '@/types';
 
 /** Parse any number-ish value (string or number) to finite number or fallback. */
 function num(value: unknown, fallback = 0): number {
@@ -118,5 +119,17 @@ export function apiCategoryToCategory(c: ApiCategory, index = 0): Category {
     name: c.name ?? '',
     photoUrl: pickPhoto(c.attachments),
     order: index,
+  };
+}
+
+/** Map backend ApiUser → frontend User. */
+export function apiUserToUser(u: ApiUser): User {
+  return {
+    id: u.id,
+    name: u.name ?? '',
+    email: u.email,
+    phone: u.phone,
+    avatarUrl: resolveAttachmentUrl(u.avatar) ?? undefined,
+    bonusPoints: Math.round(num(u.bonus)),
   };
 }
