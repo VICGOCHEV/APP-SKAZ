@@ -45,12 +45,9 @@ export async function searchDishes(query: string): Promise<Dish[]> {
       250,
     );
   }
-  // GET with a JSON body is non-standard but matches the OpenAPI spec's
-  // FilterProductRequest. Axios does send the `data` field on GET.
-  const { data } = await apiClient.request<ApiProduct[]>({
-    method: 'GET',
-    url: '/products',
-    data: { title: q },
+  // Backend accepts the FilterProductRequest as query params too.
+  const { data } = await apiClient.get<ApiProduct[]>('/products', {
+    params: { title: q },
   });
   return (data ?? []).map(productToDish);
 }

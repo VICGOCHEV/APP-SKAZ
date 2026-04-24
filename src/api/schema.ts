@@ -1,27 +1,32 @@
 /**
  * Minimal subset of backend API types actually used by the frontend.
- * Full OpenAPI spec: see docs/api.yaml (truncated) / backend side.
- *
- * These shapes are hand-maintained rather than codegen'd to keep the
- * integration light. When the backend adds new endpoints, mirror only
- * the fields we need here.
+ * Matches the shape returned by staging backend (skazka-vostoka.vtheory.ru),
+ * which diverges slightly from the nominal OpenAPI spec:
+ *   - `restrictions` is a single object, not an array
+ *   - `variation.nutritions` is an array, but `modifier.nutrition` is a single object
+ *   - product has no top-level `price` — always via `variations[0].price`
+ *   - `remaining: null` means "stock not tracked" (→ available)
+ *   - attachments contain multiple size variants: original | 1200 | 900 | 600 | 300
  */
+
+export type ApiAttachmentWidth = 'original' | '1200' | '900' | '600' | '300' | string;
 
 export type ApiAttachment = {
   id: string;
   path: string;
   name?: string;
-  type?: string;
-  width?: string | number;
+  type?: string | null;
+  width?: ApiAttachmentWidth;
 };
 
 export type ApiNutrition = {
-  fats?: number;
+  fats?: number | null;
   salt?: number | null;
-  carbs?: number;
+  carbs?: number | null;
   sugar?: number | null;
-  energy?: number;
-  proteins?: number;
+  energy?: number | null;
+  proteins?: number | null;
+  saturatedFattyAcid?: number | null;
 };
 
 export type ApiRestriction = {
@@ -37,9 +42,9 @@ export type ApiModifier = {
   name: string;
   description?: string;
   sku?: string;
-  price?: string;
-  nutritions?: ApiNutrition[];
-  restrictions?: ApiRestriction[];
+  price?: string | number;
+  nutrition?: ApiNutrition | null;
+  restrictions?: ApiRestriction;
 };
 
 export type ApiModifierGroup = {
@@ -47,7 +52,7 @@ export type ApiModifierGroup = {
   name: string;
   description?: string;
   sku?: string;
-  restrictions?: ApiRestriction[];
+  restrictions?: ApiRestriction;
   modifiers?: ApiModifier[] | null;
 };
 
@@ -56,9 +61,10 @@ export type ApiProductVariation = {
   size_name?: string;
   size_code?: string;
   weight?: number;
+  measure_unit?: string;
   measurement_unit?: string;
   sku?: string;
-  price?: string;
+  price?: string | number;
   nutritions?: ApiNutrition[];
   groups?: ApiModifierGroup[] | null;
 };
@@ -69,20 +75,20 @@ export type ApiCategory = {
   api_id?: string;
   parent?: ApiCategory | null;
   name: string;
-  description?: string;
-  color?: string;
-  flag?: boolean;
+  description?: string | null;
+  color?: string | null;
+  flag?: boolean | null;
   attachments?: ApiAttachment[];
 };
 
 export type ApiProduct = {
   id: string;
   iiko_id?: string;
-  remaining?: string;
+  remaining?: string | number | null;
   name: string;
   description?: string;
   sku?: string;
-  price?: string;
+  price?: string | number;
   variations?: ApiProductVariation[];
   categories?: ApiCategory[];
   attachments?: ApiAttachment[];
