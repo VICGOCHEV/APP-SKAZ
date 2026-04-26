@@ -1,15 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Loader2, MapPin, Plus, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, MapPin, Plus, ShieldAlert } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import Checkbox from '@/components/ui/Checkbox';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Input from '@/components/ui/Input';
 import Radio from '@/components/ui/Radio';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import TextArea from '@/components/ui/TextArea';
+import { USE_MOCKS } from '@/api/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
 import { useAddresses, useCheckAddress } from '@/hooks/queries/useAddresses';
@@ -17,6 +20,22 @@ import { useCreateOrder } from '@/hooks/queries/useOrders';
 import { formatPrice } from '@/lib/formatPrice';
 import { cn } from '@/lib/cn';
 import type { DeliveryMethod, PaymentMethod } from '@/types';
+
+/**
+ * Live-fire guard: when the dev server is running against the real API,
+ * pressing "оформить" actually creates an order in iiko. The banner +
+ * "I really mean it" checkbox in the confirm dialog prevent accidents.
+ */
+const isLiveFireOnDev =
+  !USE_MOCKS &&
+  typeof window !== 'undefined' &&
+  /^(localhost|127\.0\.0\.1|10\.|192\.168\.)/.test(window.location.hostname);
+
+const PAYMENT_LABEL: Record<PaymentMethod, string> = {
+  card_online: 'картой онлайн',
+  cash: 'наличными курьеру',
+  card_courier: 'картой курьеру',
+};
 
 const SAVED_ADDRESS_NEW = '__new__';
 
@@ -68,6 +87,13 @@ export default function CheckoutScreen() {
   const savedAddresses = addressesQuery.data ?? [];
 
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [acknowledgedLiveFire, setAcknowledgedLiveFire] = useState(false);
+  const [cooldownLeft, setCooldownLeft] = useState(0);
+  /** Held while a /orders POST is in-flight; blocks duplicate submits. */
+  const submittingRef = useRef(false);
+  /** Last successful submit timestamp — silences accidental re-clicks for 3s. */
+  const lastSubmitAtRef = useRef(0);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -146,16 +172,30 @@ export default function CheckoutScreen() {
     if (items.length === 0) navigate('/cart', { replace: true });
   }, [items.length, navigate]);
 
+  // Tick down the post-submit cooldown bar so the user can see why the
+  // button is locked instead of just a dead button.
+  useEffect(() => {
+    if (cooldownLeft <= 0) return;
+    const t = window.setTimeout(() => setCooldownLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(t);
+  }, [cooldownLeft]);
+
+  /** Validates form + opens the confirm dialog. Doesn't talk to /orders yet. */
   const onSubmit = form.handleSubmit(async (values) => {
     setSubmitError(null);
 
+    // Hard rate-limit: 3-second cooldown after a recent submit attempt.
+    const sinceLast = Date.now() - lastSubmitAtRef.current;
+    if (sinceLast < 3000) {
+      setCooldownLeft(Math.ceil((3000 - sinceLast) / 1000));
+      return;
+    }
+
     if (values.delivery === 'delivery') {
-      // Block submit if zone check failed.
       if (zoneCheck?.error) {
         setSubmitError(zoneCheck.error || 'этот адрес вне зоны доставки');
         return;
       }
-      // If still pending or never ran, do a synchronous check now.
       if (!zoneCheck && checkInput) {
         try {
           const res = await checkAddress.mutateAsync(checkInput);
@@ -170,6 +210,17 @@ export default function CheckoutScreen() {
       }
     }
 
+    setAcknowledgedLiveFire(false);
+    setConfirmOpen(true);
+  });
+
+  /** Actually fires the /orders POST after the user confirms in the dialog. */
+  const performSubmit = async () => {
+    if (submittingRef.current) return; // idempotency: one in-flight at a time
+    submittingRef.current = true;
+    lastSubmitAtRef.current = Date.now();
+
+    const values = form.getValues();
     try {
       const useSavedId =
         values.delivery === 'delivery' &&
@@ -201,6 +252,7 @@ export default function CheckoutScreen() {
         phone: values.phone,
       });
       clear();
+      setConfirmOpen(false);
       if (result.paymentUrl) {
         window.location.href = result.paymentUrl;
         return;
@@ -212,16 +264,35 @@ export default function CheckoutScreen() {
       }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Ошибка отправки заказа');
+      setConfirmOpen(false);
+    } finally {
+      submittingRef.current = false;
     }
-  });
+  };
 
   const submitDisabled =
     createOrder.isPending ||
+    cooldownLeft > 0 ||
     (delivery === 'delivery' && (checkAddress.isPending || (zoneCheck && !zoneOk)));
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-paper">
       <ScreenHeader variant="back" title="оформление" onBack={() => navigate(-1)} />
+      {isLiveFireOnDev && (
+        <div className="border-b border-warning/40 bg-warning/15 px-4 py-2.5">
+          <div className="flex items-start gap-2 text-[12px] text-ink-900">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0 text-warning" strokeWidth={2} />
+            <span>
+              <strong>боевой режим:</strong> вы на локалке, но API настоящий — клик «оформить»
+              создаст реальный заказ в iiko. Для теста выключите{' '}
+              <code className="rounded bg-cream-deep px-1 font-mono text-[11px]">
+                VITE_USE_MOCKS
+              </code>
+              .
+            </span>
+          </div>
+        </div>
+      )}
       <form onSubmit={onSubmit} className="flex flex-1 flex-col gap-6 px-4 pt-4 pb-[120px]">
         <section>
           <h3 className="mb-2 text-[11px] font-medium tracking-[0.14em] text-ink-500 uppercase">
@@ -513,10 +584,64 @@ export default function CheckoutScreen() {
               createOrder.isPending ? <Loader2 size={16} className="animate-spin" /> : undefined
             }
           >
-            оформить — {formatPrice(finalTotal)}
+            {cooldownLeft > 0
+              ? `подождите ${cooldownLeft}с`
+              : `оформить — ${formatPrice(finalTotal)}`}
           </Button>
         </div>
       </form>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="оформить заказ?"
+        description={
+          <div className="flex flex-col gap-1.5">
+            <div>
+              <span className="text-ink-500">сумма:</span>{' '}
+              <strong className="text-wine">{formatPrice(finalTotal)}</strong>
+            </div>
+            <div>
+              <span className="text-ink-500">оплата:</span>{' '}
+              {PAYMENT_LABEL[payment as PaymentMethod] ?? payment}
+            </div>
+            <div>
+              <span className="text-ink-500">{delivery === 'pickup' ? 'самовывоз' : 'доставка'}:</span>{' '}
+              {delivery === 'pickup'
+                ? 'забрать в ресторане'
+                : !usingNewAddress
+                  ? savedAddresses.find((a) => a.id === savedAddressId)?.line ?? '—'
+                  : `${form.getValues('street') || ''}, ${form.getValues('house') || ''}`}
+            </div>
+            {payment === 'card_online' && (
+              <div className="mt-1 text-[12px] text-ink-500">
+                после подтверждения откроется страница оплаты
+              </div>
+            )}
+            {isLiveFireOnDev && (
+              <div className="mt-2 rounded-md bg-warning/15 px-2.5 py-1.5 text-[11px] text-ink-900">
+                ⚠️ боевой API — заказ реально уйдёт повару
+              </div>
+            )}
+          </div>
+        }
+        confirmLabel="да, оформить"
+        cancelLabel="нет, передумал"
+        loading={createOrder.isPending}
+        confirmDisabled={isLiveFireOnDev && !acknowledgedLiveFire}
+        onCancel={() => {
+          if (createOrder.isPending) return;
+          setConfirmOpen(false);
+        }}
+        onConfirm={performSubmit}
+      >
+        {isLiveFireOnDev && (
+          <Checkbox
+            label="я понимаю, что заказ уйдёт в реальный iiko"
+            checked={acknowledgedLiveFire}
+            onChange={(e) => setAcknowledgedLiveFire(e.target.checked)}
+          />
+        )}
+      </ConfirmDialog>
     </div>
   );
 }
