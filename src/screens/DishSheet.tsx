@@ -78,7 +78,7 @@ export default function DishSheet() {
       initial={{ y: -PHOTO_SIZE - 40, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       exit={{ y: -PHOTO_SIZE - 40, opacity: 0 }}
-      transition={{ type: 'spring', damping: 26, stiffness: 200, mass: 0.9 }}
+      transition={{ type: 'spring', damping: 22, stiffness: 320, mass: 0.6 }}
     >
       <img
         src={dish.photoUrl}
