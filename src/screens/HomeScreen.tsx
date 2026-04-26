@@ -84,6 +84,18 @@ export default function HomeScreen() {
     [dishes],
   );
 
+  // Backend mostly doesn't return category images yet; fall back to the
+  // first product photo in that category so the round chips never look empty.
+  const categoriesWithImages = useMemo(() => {
+    if (!categories) return [];
+    if (!dishes?.length) return categories;
+    return categories.map((c) => {
+      if (c.photoUrl) return c;
+      const fallback = dishes.find((d) => d.categoryId === c.id && d.photoUrl);
+      return fallback ? { ...c, photoUrl: fallback.photoUrl } : c;
+    });
+  }, [categories, dishes]);
+
   const searchResults = useMemo(() => {
     if (!isSearching) return [];
     const q = query.trim().toLowerCase();
@@ -257,7 +269,7 @@ export default function HomeScreen() {
                 </div>
               ) : (
                 <CategoryScroller
-                  categories={categories ?? []}
+                  categories={categoriesWithImages}
                   onSelect={(c) => navigate(`/menu/east/${c.id}`)}
                 />
               )}

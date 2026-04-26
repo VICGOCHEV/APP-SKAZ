@@ -82,17 +82,33 @@ function mapModifiers(groups?: ApiModifierGroup[] | null): Modifier[] {
  * Categories whose products are sold per-portion-of-N-grams (price scales by weight).
  * Lowercased substring match against category name.
  */
-const WEIGHTED_CATEGORY_HINTS = ['мангал', 'шашлык', 'кебаб', 'на углях'];
+const WEIGHTED_CATEGORY_HINTS = ['мангал', 'шашлык', 'кебаб'];
+
+/** Product-name patterns that mean "priced per portion" (across any category). */
+const WEIGHTED_NAME_HINTS = ['на углях', 'гриль'];
 
 /** Max base portion (g) we treat as weighted — bigger = a fixed-size platter. */
 const WEIGHTED_MAX_BASE_PORTION_G = 250;
 
-/** True if product belongs to a per-weight category and has a sensible base portion. */
+/**
+ * True if product is sold by weight (price scales linearly with grams).
+ *
+ * Two signals:
+ *  - category contains "мангал/шашлык/кебаб" (covers all мясо на мангале)
+ *  - product name contains "на углях" or "гриль" (covers grilled sides:
+ *    помидор/баклажан/перец/цукини/шампиньоны/картофель на углях)
+ */
 export function isWeightedProduct(p: ApiProduct): boolean {
   const baseWeight = p.variations?.[0]?.weight ?? 0;
   if (!baseWeight || baseWeight > WEIGHTED_MAX_BASE_PORTION_G) return false;
+
   const cats = (p.categories ?? []).map((c) => (c.name ?? '').toLowerCase());
-  return cats.some((n) => WEIGHTED_CATEGORY_HINTS.some((hint) => n.includes(hint)));
+  if (cats.some((n) => WEIGHTED_CATEGORY_HINTS.some((hint) => n.includes(hint)))) {
+    return true;
+  }
+
+  const name = (p.name ?? '').toLowerCase();
+  return WEIGHTED_NAME_HINTS.some((hint) => name.includes(hint));
 }
 
 /** Build N-portion presets in `baseWeight` increments (1× … 10×). */
