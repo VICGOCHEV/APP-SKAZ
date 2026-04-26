@@ -211,3 +211,38 @@ export type ApiAddModifierToCartItemRequest = {
   quantity?: number;
   cart_item_id: string;
 };
+
+/* ================================
+ * Orders
+ * ================================ */
+
+export type ApiOrderPaymentMethod = 'CARD' | 'CASH' | 'SBP';
+export type ApiOrderType = 'DELIVERY_BY_CLIENT' | 'DELIVERY_BY_COURIER';
+
+export type ApiCreateAddressInline = {
+  street: string;
+  house: string;
+  entrance?: string;
+  floor?: string;
+  apartment?: string;
+};
+
+/**
+ * Three valid shapes (oneOf in spec):
+ *  1) guest: name + phone + address (inline) + payment
+ *  2) authed + new address: address (inline) + payment
+ *  3) authed + saved address: address_id + payment
+ */
+export type ApiCreateOrderRequest = {
+  address?: ApiCreateAddressInline;
+  address_id?: string;
+  phone?: string;
+  name?: string;
+  payment: ApiOrderPaymentMethod;
+  type?: ApiOrderType;
+  comment?: string;
+  bonuses?: string;
+};
+
+/** POST /orders returns a string — either a payment URL (CARD/SBP) or order id (CASH). */
+export type ApiCreateOrderResponse = string;

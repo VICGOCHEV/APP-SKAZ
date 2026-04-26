@@ -1,11 +1,10 @@
-import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Check, ChefHat, MapPin, Package, Truck } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import Skeleton from '@/components/ui/Skeleton';
-import { useOrder, useUpdateOrderStatus } from '@/hooks/queries/useOrders';
+import { useOrder } from '@/hooks/queries/useOrders';
 import { formatPrice } from '@/lib/formatPrice';
 import { cn } from '@/lib/cn';
 import type { OrderStatus } from '@/types';
@@ -56,19 +55,6 @@ export default function OrderStatusScreen() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: order, isPending } = useOrder(id);
-  const updateStatus = useUpdateOrderStatus();
-
-  // Mock status progression: every 6s advance to next status
-  useEffect(() => {
-    if (!order || order.status === 'delivered' || order.status === 'cancelled') return;
-    const currentIdx = STATUS_FLOW.indexOf(order.status);
-    if (currentIdx < 0 || currentIdx >= STATUS_FLOW.length - 1) return;
-    const next = STATUS_FLOW[currentIdx + 1];
-    const timer = window.setTimeout(() => {
-      updateStatus.mutate({ id: order.id, status: next });
-    }, 6000);
-    return () => window.clearTimeout(timer);
-  }, [order?.id, order?.status, updateStatus]);
 
   const currentStepIdx = order ? STATUS_FLOW.indexOf(order.status) : -1;
 

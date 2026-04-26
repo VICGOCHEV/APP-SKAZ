@@ -3,6 +3,9 @@ import {
   createOrder,
   getOrderById,
   getOrderHistory,
+  notifyPaymentFailed,
+  notifyPaymentSuccess,
+  repeatOrder,
   updateOrderStatus,
   type CreateOrderInput,
 } from '@/api/orders';
@@ -30,8 +33,29 @@ export function useCreateOrder() {
     mutationFn: (input: CreateOrderInput) => createOrder(input),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.orderHistory });
+      // Cart was consumed by /orders POST — drop the cached server cart so
+      // the next CartScreen mount refetches.
+      void qc.invalidateQueries({ queryKey: queryKeys.cart });
     },
   });
+}
+
+export function useRepeatOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => repeatOrder(id),
+    onSuccess: (cartItems) => {
+      qc.setQueryData(queryKeys.cart, cartItems);
+    },
+  });
+}
+
+export function useNotifyPaymentSuccess() {
+  return useMutation({ mutationFn: (orderId: string) => notifyPaymentSuccess(orderId) });
+}
+
+export function useNotifyPaymentFailed() {
+  return useMutation({ mutationFn: (orderId: string) => notifyPaymentFailed(orderId) });
 }
 
 export function useUpdateOrderStatus() {

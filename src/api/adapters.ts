@@ -5,10 +5,21 @@ import type {
   ApiCategory,
   ApiModifierGroup,
   ApiNutrition,
+  ApiOrder,
   ApiProduct,
   ApiUser,
 } from './schema';
-import type { CartItem, Category, Dish, Modifier, Nutrients, User } from '@/types';
+import type {
+  CartItem,
+  Category,
+  Dish,
+  Modifier,
+  Nutrients,
+  Order,
+  OrderStatus,
+  PaymentMethod,
+  User,
+} from '@/types';
 
 /** Parse any number-ish value (string | number | null) to finite number or fallback. */
 function num(value: unknown, fallback = 0): number {
@@ -213,6 +224,66 @@ export function apiCartItemToCartItem(item: ApiCartItem): CartItem {
 export function apiCartToCartItems(cart: ApiCart | null | undefined): CartItem[] {
   if (!cart?.items?.length) return [];
   return cart.items.map(apiCartItemToCartItem);
+}
+
+/** Backend payment enum → frontend PaymentMethod. */
+function apiPaymentToPayment(p: ApiOrder['payment'] | undefined): PaymentMethod {
+  switch (p?.payment) {
+    case 'CARD':
+    case 'SBP':
+      return 'card_online';
+    case 'CASH':
+      return 'cash';
+    default:
+      return 'card_online';
+  }
+}
+
+/**
+ * Backend doesn't expose a structured `status` field on OrderData yet —
+ * we default freshly-fetched orders to 'accepted' until iiko status mapping
+ * is wired up. Caller can override based on payment-callback responses.
+ */
+export function apiOrderToOrder(o: ApiOrder): Order {
+  const items: CartItem[] = (o.items ?? []).map((it) => {
+    const baseWeight = it.product?.variations?.[0]?.weight ?? 0;
+    const weighted = it.product ? isWeightedProduct(it.product) : false;
+    const portions = Math.max(1, Math.round(num(it.quantity, 1)));
+    const rawPrice = num(it.product?.variations?.[0]?.price ?? it.product?.price);
+    return {
+      dishId: it.product?.id ?? '',
+      quantity: weighted ? 1 : portions,
+      weight: weighted && baseWeight ? Math.round(baseWeight * portions) : undefined,
+      modifiers: (it.modifiers ?? [])
+        .map((m) => m.product?.id)
+        .filter((id): id is string => Boolean(id)),
+      price: Math.round(rawPrice * portions),
+    };
+  });
+
+  // Server returns "DD-MM-YYYY HH:mm:ss" — convert to ISO if possible.
+  const iso = (() => {
+    const m = (o.created ?? '').match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/);
+    if (!m) return o.created ?? new Date().toISOString();
+    const [, d, mo, y, h, mi, s] = m;
+    return new Date(`${y}-${mo}-${d}T${h}:${mi}:${s}`).toISOString();
+  })();
+
+  const status: OrderStatus = 'accepted';
+
+  return {
+    id: o.id,
+    items,
+    total: Math.round(num(o.total)),
+    delivery: o.address ? 'delivery' : 'pickup',
+    address: o.address
+      ? { id: `srv-${o.id}`, line: o.address }
+      : undefined,
+    time: 'asap',
+    payment: apiPaymentToPayment(o.payment),
+    status,
+    createdAt: iso,
+  };
 }
 
 /** Map backend ApiUser → frontend User. */

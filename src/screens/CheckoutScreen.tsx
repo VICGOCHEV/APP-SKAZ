@@ -104,7 +104,7 @@ export default function CheckoutScreen() {
   const onSubmit = form.handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      const order = await createOrder.mutateAsync({
+      const result = await createOrder.mutateAsync({
         items,
         total: finalTotal,
         delivery: values.delivery as DeliveryMethod,
@@ -122,9 +122,21 @@ export default function CheckoutScreen() {
         time: values.timeMode === 'asap' ? 'asap' : values.timeScheduled ?? 'asap',
         payment: values.payment as PaymentMethod,
         comment: values.comment,
+        name: values.name,
+        phone: values.phone,
       });
       clear();
-      navigate(`/order/${order.id}`, { replace: true });
+      // Card-online → external payment URL. Backend redirects back to
+      // /payments/<id>/success|failed (handled by PaymentReturnScreen).
+      if (result.paymentUrl) {
+        window.location.href = result.paymentUrl;
+        return;
+      }
+      if (result.orderId) {
+        navigate(`/order/${result.orderId}`, { replace: true });
+      } else {
+        navigate('/profile/orders', { replace: true });
+      }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Ошибка отправки заказа');
     }

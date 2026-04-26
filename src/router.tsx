@@ -15,6 +15,7 @@ import MocksInspectorScreen from '@/screens/MocksInspectorScreen';
 import OrderHistoryScreen from '@/screens/OrderHistoryScreen';
 import OrderStatusScreen from '@/screens/OrderStatusScreen';
 import PaymentCardsScreen from '@/screens/PaymentCardsScreen';
+import PaymentReturnScreen from '@/screens/PaymentReturnScreen';
 import ProfileScreen from '@/screens/ProfileScreen';
 import PromosScreen from '@/screens/PromosScreen';
 import StoryScreen from '@/screens/StoryScreen';
@@ -147,6 +148,14 @@ function MainRoutes({ location }: { location: Location }) {
       />
       {/* Fullscreen — no AppShell / no tab-bar */}
       <Route path="/checkout" element={<AnimatedPage><CheckoutScreen /></AnimatedPage>} />
+      <Route
+        path="/payments/:id/success"
+        element={<AnimatedPage><PaymentReturnScreen outcome="success" /></AnimatedPage>}
+      />
+      <Route
+        path="/payments/:id/failed"
+        element={<AnimatedPage><PaymentReturnScreen outcome="failed" /></AnimatedPage>}
+      />
       <Route path="/profile/chat" element={<AnimatedPage><ChatScreen /></AnimatedPage>} />
       <Route path="/login" element={<AnimatedPage><LoginScreen /></AnimatedPage>} />
       <Route path="/stories/:id" element={<StoryScreen />} />

@@ -7,7 +7,8 @@ import EmptyState from '@/components/ui/EmptyState';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import Skeleton from '@/components/ui/Skeleton';
 import { useDishes } from '@/hooks/queries/useDishes';
-import { useOrderHistory } from '@/hooks/queries/useOrders';
+import { useOrderHistory, useRepeatOrder } from '@/hooks/queries/useOrders';
+import { useUserStore } from '@/stores/user';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/formatPrice';
 import { cn } from '@/lib/cn';
@@ -47,6 +48,8 @@ export default function OrderHistoryScreen() {
   const { data: orders, isPending } = useOrderHistory();
   const { data: dishes } = useDishes();
   const { addDish } = useCart();
+  const repeatMutation = useRepeatOrder();
+  const isAuthed = useUserStore((s) => s.status === 'authenticated');
 
   const dishById = useMemo(() => {
     const map = new Map<string, Dish>();
@@ -54,7 +57,17 @@ export default function OrderHistoryScreen() {
     return map;
   }, [dishes]);
 
-  const repeat = (order: Order) => {
+  const repeat = async (order: Order) => {
+    if (isAuthed) {
+      // Authed → backend rebuilds the cart server-side; just navigate.
+      try {
+        await repeatMutation.mutateAsync(order.id);
+        navigate('/cart');
+        return;
+      } catch {
+        // fall through to local replay
+      }
+    }
     order.items.forEach((item) => {
       const dish = dishById.get(item.dishId);
       if (!dish) return;
