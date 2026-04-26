@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_YM_COUNTER_ID?: string;
   readonly VITE_RELEASE?: string;
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- module augmentation
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

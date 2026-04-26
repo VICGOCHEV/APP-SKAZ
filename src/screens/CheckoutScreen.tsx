@@ -85,7 +85,7 @@ export default function CheckoutScreen() {
   const createOrder = useCreateOrder();
   const checkAddress = useCheckAddress();
   const addressesQuery = useAddresses();
-  const savedAddresses = addressesQuery.data ?? [];
+  const savedAddresses = useMemo(() => addressesQuery.data ?? [], [addressesQuery.data]);
 
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);

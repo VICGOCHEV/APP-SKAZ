@@ -51,20 +51,20 @@ function initMetrika() {
   if (metrikaReady) return;
 
   // Standard YM bootstrap, adapted to TypeScript.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (function (m: any, e: Document, t: string, r: string, i: string) {
-    m[i] =
-      m[i] ||
-      function () {
-        (m[i].a = m[i].a || []).push(arguments);
-      };
-    m[i].l = 1 * Number(new Date());
-    const k = e.createElement(t) as HTMLScriptElement;
-    const a = e.getElementsByTagName(t)[0];
-    k.async = true;
-    k.src = r;
-    a.parentNode?.insertBefore(k, a);
-  })(window, document, 'script', 'https://mc.yandex.ru/metrika/tag.js', 'ym');
+  type YmStub = ((...args: unknown[]) => void) & { a?: unknown[][]; l?: number };
+  const w = window as Window & { ym?: YmStub };
+  const stub: YmStub =
+    w.ym ??
+    ((...args: unknown[]) => {
+      (stub.a = stub.a ?? []).push(args);
+    });
+  stub.l = Date.now();
+  w.ym = stub;
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = 'https://mc.yandex.ru/metrika/tag.js';
+  const firstScript = document.getElementsByTagName('script')[0];
+  firstScript.parentNode?.insertBefore(script, firstScript);
 
   window.ym?.(YM_ID, 'init', {
     clickmap: true,

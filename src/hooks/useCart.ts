@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { selectCartCount, selectCartTotal, useCartStore } from '@/stores/cart';
 import { useServerCartMutations, useServerCartQuery } from '@/hooks/queries/useServerCart';
 import { useUserStore } from '@/stores/user';
@@ -53,7 +53,7 @@ export function useCart(): CartFacade {
   const serverQuery = useServerCartQuery();
   const { addMutation, removeMutation } = useServerCartMutations();
 
-  const serverItems = serverQuery.data ?? [];
+  const serverItems = useMemo(() => serverQuery.data ?? [], [serverQuery.data]);
   const serverCount = serverItems.reduce((s, it) => s + it.quantity, 0);
   const serverTotal = serverItems.reduce((s, it) => s + it.price, 0);
 
@@ -124,6 +124,20 @@ export function useCart(): CartFacade {
     removeMutation.mutate(ids);
   }, [serverItems, removeMutation]);
 
+  const addDishLocal = useCallback(
+    (dish: Dish, opts?: AddOpts) => {
+      localAddDish(dish, opts);
+      trackEvent('add_to_cart', {
+        dish_id: dish.id,
+        dish_name: dish.name,
+        price: dish.price,
+        quantity: opts?.quantity ?? 1,
+        weighted: dish.isWeighted,
+      });
+    },
+    [localAddDish],
+  );
+
   if (isAuthed) {
     return {
       items: serverItems,
@@ -140,20 +154,6 @@ export function useCart(): CartFacade {
       isMutating: addMutation.isPending || removeMutation.isPending,
     };
   }
-
-  const addDishLocal = useCallback(
-    (dish: Dish, opts?: AddOpts) => {
-      localAddDish(dish, opts);
-      trackEvent('add_to_cart', {
-        dish_id: dish.id,
-        dish_name: dish.name,
-        price: dish.price,
-        quantity: opts?.quantity ?? 1,
-        weighted: dish.isWeighted,
-      });
-    },
-    [localAddDish],
-  );
 
   return {
     items: localItems,
