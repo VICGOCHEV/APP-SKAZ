@@ -1,21 +1,26 @@
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
+  Clock,
   CreditCard,
   History,
   LogOut,
+  Mail,
   MapPin,
   MessageCircle,
+  Phone,
   Sparkles,
   User,
 } from 'lucide-react';
 import GroupedList from '@/components/ui/GroupedList';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import { useAuth } from '@/hooks/useAuth';
+import { useRestaurantInfo } from '@/hooks/queries/useSettings';
 
 export default function ProfileScreen() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const info = useRestaurantInfo();
 
   if (!user) {
     return (
@@ -110,6 +115,42 @@ export default function ProfileScreen() {
             },
           ]}
         />
+
+        {(info.phone || info.email || info.address || info.workingHours.length > 0) && (
+          <GroupedList
+            title="ресторан"
+            items={[
+              info.phone && {
+                id: 'phone',
+                icon: <Phone size={18} strokeWidth={1.6} />,
+                label: info.phone,
+                description: 'позвонить',
+                onClick: () => {
+                  window.location.href = `tel:${(info.phone ?? '').replace(/[^\d+]/g, '')}`;
+                },
+              },
+              info.email && {
+                id: 'email',
+                icon: <Mail size={18} strokeWidth={1.6} />,
+                label: info.email,
+                onClick: () => {
+                  window.location.href = `mailto:${info.email}`;
+                },
+              },
+              info.address && {
+                id: 'address',
+                icon: <MapPin size={18} strokeWidth={1.6} />,
+                label: info.address,
+              },
+              info.workingHours.length > 0 && {
+                id: 'hours',
+                icon: <Clock size={18} strokeWidth={1.6} />,
+                label: 'часы работы',
+                description: info.workingHours.join(' · '),
+              },
+            ].filter(Boolean) as Parameters<typeof GroupedList>[0]['items']}
+          />
+        )}
       </div>
     </div>
   );

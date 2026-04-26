@@ -15,4 +15,5 @@ export const queryKeys = {
   addresses: ['addresses'] as const,
   addressCheck: (street: string, house: string) =>
     ['addresses', 'check', street, house] as const,
+  settings: ['settings'] as const,
 };

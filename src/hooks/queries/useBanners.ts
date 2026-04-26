@@ -5,6 +5,6 @@ import { queryKeys } from './queryKeys';
 export function useBanners() {
   return useQuery({
     queryKey: queryKeys.banners,
-    queryFn: getBanners,
+    queryFn: () => getBanners(),
   });
 }

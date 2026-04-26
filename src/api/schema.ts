@@ -265,3 +265,33 @@ export type ApiCheckAddressResponse = {
   error: string | null;
   price: number | null;
 };
+
+/* ================================
+ * Settings
+ * ================================ */
+
+export type ApiSettingKey =
+  | 'PHONE'
+  | 'EMAIL'
+  | 'EMAIL_FORMS'
+  | 'ADDRESS'
+  | 'WORKING_HOURS'
+  | 'POLICY_DOCS'
+  | 'OFFER_DOCS';
+
+export type ApiSetting = {
+  key: ApiSettingKey | string;
+  label: string;
+  /** Single string for most keys; array for WORKING_HOURS. Null when unset. */
+  value: string | string[] | null;
+  exists?: boolean;
+};
+
+/* ================================
+ * Banner filter (already have ApiBanner above)
+ * ================================ */
+
+export type ApiBannerFilter = {
+  type?: ApiBannerType;
+  position?: string;
+};

@@ -1,6 +1,7 @@
 import type {
   ApiAddress,
   ApiAttachment,
+  ApiBanner,
   ApiCart,
   ApiCartItem,
   ApiCategory,
@@ -12,6 +13,7 @@ import type {
 } from './schema';
 import type {
   Address,
+  Banner,
   CartItem,
   Category,
   Dish,
@@ -285,6 +287,39 @@ export function apiOrderToOrder(o: ApiOrder): Order {
     payment: apiPaymentToPayment(o.payment),
     status,
     createdAt: iso,
+  };
+}
+
+const BANNER_TONES: Banner['tone'][] = ['red', 'green', 'ink'];
+
+/**
+ * Backend BannerData → frontend Banner. Picks an image from the banner's
+ * own attachment when present, falling back to the linked product's photo.
+ * The linked-resource determines the deeplink: a product banner opens its
+ * dish sheet; a category banner opens that category in the menu.
+ */
+export function apiBannerToBanner(b: ApiBanner, index = 0): Banner {
+  const productPhoto = pickPhoto(b.product?.attachments, '900');
+  const imageUrl =
+    resolveAttachmentUrl(b.attachment?.path) ?? productPhoto ?? null;
+
+  const title = b.title?.trim() || b.product?.name || b.category?.name || '';
+  const kicker = b.type?.label?.toLowerCase() ?? '';
+
+  const deeplink = b.product
+    ? `/dish/${b.product.id}`
+    : b.category
+      ? `/menu/east/${b.category.id}`
+      : '/';
+
+  return {
+    id: b.id,
+    imageUrl,
+    kicker,
+    title,
+    cta: b.product ? 'смотреть блюдо' : b.category ? 'открыть раздел' : 'подробнее',
+    deeplink,
+    tone: BANNER_TONES[index % BANNER_TONES.length],
   };
 }
 
