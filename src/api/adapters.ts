@@ -79,6 +79,29 @@ function mapModifiers(groups?: ApiModifierGroup[] | null): Modifier[] {
 }
 
 /**
+ * Categories whose products are sold per-portion-of-N-grams (price scales by weight).
+ * Lowercased substring match against category name.
+ */
+const WEIGHTED_CATEGORY_HINTS = ['мангал', 'шашлык', 'кебаб', 'на углях'];
+
+/** Max base portion (g) we treat as weighted — bigger = a fixed-size platter. */
+const WEIGHTED_MAX_BASE_PORTION_G = 250;
+
+/** True if product belongs to a per-weight category and has a sensible base portion. */
+export function isWeightedProduct(p: ApiProduct): boolean {
+  const baseWeight = p.variations?.[0]?.weight ?? 0;
+  if (!baseWeight || baseWeight > WEIGHTED_MAX_BASE_PORTION_G) return false;
+  const cats = (p.categories ?? []).map((c) => (c.name ?? '').toLowerCase());
+  return cats.some((n) => WEIGHTED_CATEGORY_HINTS.some((hint) => n.includes(hint)));
+}
+
+/** Build N-portion presets in `baseWeight` increments (1× … 10×). */
+function buildWeightPresets(baseWeight: number): number[] {
+  if (!baseWeight) return [];
+  return [1, 2, 3, 4, 5, 6, 8, 10].map((mult) => Math.round(baseWeight * mult));
+}
+
+/**
  * Map backend ApiProduct → frontend Dish.
  *
  * Simplifications for MVP:
@@ -90,6 +113,11 @@ function mapModifiers(groups?: ApiModifierGroup[] | null): Modifier[] {
  *  - `remaining === null` → stock is NOT tracked in iiko → available
  *  - `remaining <= 0` → explicitly out of stock
  *  - `remaining > 0`  → in stock
+ *
+ * Weighted logic:
+ *  - products in "мясо на мангале" with portion ≤ 250g are sold per-portion;
+ *    user picks weight via slider and we multiply price linearly. Cart sends
+ *    quantity = weight / baseWeight portions to the backend.
  */
 export function productToDish(p: ApiProduct): Dish {
   const firstVariation = p.variations?.[0];
@@ -99,6 +127,8 @@ export function productToDish(p: ApiProduct): Dish {
 
   const rawPrice = firstVariation?.price ?? p.price;
   const price = Math.round(num(rawPrice));
+  const baseWeight = firstVariation?.weight ? Math.round(firstVariation.weight) : 0;
+  const weighted = isWeightedProduct(p);
 
   const isAvailable = p.remaining === null || p.remaining === undefined ? true : num(p.remaining) > 0;
 
@@ -110,10 +140,10 @@ export function productToDish(p: ApiProduct): Dish {
     photoUrl: pickPhoto(p.attachments, '900'),
     categoryId: firstCategory?.id ?? 'uncategorized',
     cuisineId: 'east',
-    isWeighted: false,
+    isWeighted: weighted,
     price,
-    baseWeight: firstVariation?.weight ? Math.round(firstVariation.weight) : 0,
-    weightPresets: [],
+    baseWeight,
+    weightPresets: weighted ? buildWeightPresets(baseWeight) : [],
     cookTime: '',
     deliveryTime: '',
     calories,
@@ -141,12 +171,21 @@ export function apiCategoryToCategory(c: ApiCategory, index = 0): Category {
  * Map a single CartItemData → frontend CartItem.
  * `serverId` carries the backend cart_item_id so we can target it later
  * for removal or modifier edits.
+ *
+ * For weighted products (e.g. shashlik) the backend tracks integer portions;
+ * we expose total grams as `weight` so the UI can show the slider, with
+ * `quantity` kept at 1 (the line is one weighted portion of N grams).
  */
 export function apiCartItemToCartItem(item: ApiCartItem): CartItem {
+  const portions = Math.max(1, Math.round(num(item.quantity, 1)));
+  const baseWeight = item.product?.variations?.[0]?.weight ?? 0;
+  const weighted = item.product ? isWeightedProduct(item.product) : false;
+
   return {
     serverId: item.id,
     dishId: item.product?.id ?? '',
-    quantity: Math.max(1, Math.round(num(item.quantity, 1))),
+    quantity: weighted ? 1 : portions,
+    weight: weighted && baseWeight ? Math.round(baseWeight * portions) : undefined,
     modifiers: (item.modifiers ?? [])
       .map((m) => m.modifier?.id)
       .filter((id): id is string => Boolean(id)),

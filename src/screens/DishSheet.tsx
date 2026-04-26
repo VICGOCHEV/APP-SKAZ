@@ -26,6 +26,12 @@ export default function DishSheet() {
 
   const [weight, setWeight] = useState(dish?.baseWeight ?? 200);
   const [qty, setQty] = useState(1);
+
+  // When the dish loads (or changes), seed the slider to its base portion
+  // so the value is always a valid multiple of `baseWeight`.
+  useEffect(() => {
+    if (dish?.isWeighted && dish.baseWeight) setWeight(dish.baseWeight);
+  }, [dish?.id, dish?.isWeighted, dish?.baseWeight]);
   const [expanded, setExpanded] = useState(false);
   const [selectedModifiers, setSelectedModifiers] = useState<Set<string>>(() => new Set());
   const [isOpen, setIsOpen] = useState(true);
@@ -196,9 +202,12 @@ export default function DishSheet() {
               <WeightSlider
                 value={weight}
                 onChange={setWeight}
-                min={dish.weightPresets[0] ?? 50}
-                max={dish.weightPresets[dish.weightPresets.length - 1] ?? 800}
-                step={10}
+                min={dish.weightPresets[0] ?? dish.baseWeight ?? 100}
+                max={
+                  dish.weightPresets[dish.weightPresets.length - 1] ??
+                  (dish.baseWeight ? dish.baseWeight * 10 : 800)
+                }
+                step={dish.baseWeight || 10}
               />
             ) : (
               <QuantityStepper value={qty} onChange={setQty} />

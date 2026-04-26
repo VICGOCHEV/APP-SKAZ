@@ -58,9 +58,12 @@ export function useCart(): CartFacade {
 
   const addDishServer = useCallback(
     (dish: Dish, opts?: AddOpts) => {
+      const portions = dish.isWeighted && opts?.weight && dish.baseWeight
+        ? Math.max(1, Math.round(opts.weight / dish.baseWeight))
+        : (opts?.quantity ?? 1);
       addMutation.mutate({
         productId: dish.id,
-        quantity: opts?.quantity ?? 1,
+        quantity: portions,
         modifiers: (opts?.modifiers ?? []).map((id) => ({ modifierId: id })),
       });
     },
@@ -82,6 +85,20 @@ export function useCart(): CartFacade {
       });
     },
     [serverItems, addMutation, removeMutation],
+  );
+
+  const setWeightServer = useCallback(
+    (index: number, dish: Dish, weight: number) => {
+      const item = serverItems[index];
+      if (!item || !dish.baseWeight) return;
+      const portions = Math.max(1, Math.round(weight / dish.baseWeight));
+      addMutation.mutate({
+        productId: dish.id,
+        quantity: portions,
+        modifiers: item.modifiers.map((id) => ({ modifierId: id })),
+      });
+    },
+    [serverItems, addMutation],
   );
 
   const removeAtServer = useCallback(
@@ -106,9 +123,7 @@ export function useCart(): CartFacade {
       total: serverTotal,
       addDish: addDishServer,
       setQuantity: setQuantityServer,
-      setWeight: () => {
-        /* no-op: backend has no weighted products */
-      },
+      setWeight: setWeightServer,
       removeAt: removeAtServer,
       updateAt: () => {
         /* not used in server mode */
