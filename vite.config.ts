@@ -13,6 +13,23 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
       },
     },
+    build: {
+      // Split heavy third-party deps off the main bundle so first paint
+      // doesn't carry framer-motion (~80KB) or the full icon set.
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'motion': ['framer-motion'],
+            'icons': ['lucide-react'],
+            'forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+            'data': ['@tanstack/react-query', 'axios'],
+          },
+        },
+      },
+      // Honest threshold — main bundle should stay under this.
+      chunkSizeWarningLimit: 350,
+    },
     server: {
       port: 5173,
       host: true,
