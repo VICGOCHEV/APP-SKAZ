@@ -1,4 +1,5 @@
 import type {
+  ApiAddress,
   ApiAttachment,
   ApiCart,
   ApiCartItem,
@@ -10,6 +11,7 @@ import type {
   ApiUser,
 } from './schema';
 import type {
+  Address,
   CartItem,
   Category,
   Dish,
@@ -283,6 +285,26 @@ export function apiOrderToOrder(o: ApiOrder): Order {
     payment: apiPaymentToPayment(o.payment),
     status,
     createdAt: iso,
+  };
+}
+
+/**
+ * Backend AddressData → frontend Address. Builds a display `line` from
+ * street + house (apartment goes to `flat`, not `line`, so the form can
+ * round-trip cleanly).
+ */
+export function apiAddressToAddress(a: ApiAddress): Address {
+  const street = (a.street ?? '').trim();
+  const house = (a.house ?? '').trim();
+  const line = [street, house].filter(Boolean).join(', ');
+  return {
+    id: a.id,
+    line,
+    street,
+    house,
+    entrance: a.entrance,
+    floor: a.floor,
+    flat: a.apartment,
   };
 }
 

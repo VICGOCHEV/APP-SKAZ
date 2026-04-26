@@ -12,4 +12,7 @@ export const queryKeys = {
   order: (id: string) => ['orders', id] as const,
   orderHistory: ['orders', 'history'] as const,
   cart: ['cart'] as const,
+  addresses: ['addresses'] as const,
+  addressCheck: (street: string, house: string) =>
+    ['addresses', 'check', street, house] as const,
 };

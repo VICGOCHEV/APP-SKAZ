@@ -246,3 +246,22 @@ export type ApiCreateOrderRequest = {
 
 /** POST /orders returns a string — either a payment URL (CARD/SBP) or order id (CASH). */
 export type ApiCreateOrderResponse = string;
+
+/* ================================
+ * Addresses (extends earlier ApiAddress)
+ * ================================ */
+
+export type ApiCheckAddressRequest = {
+  street: string;
+  house: string;
+};
+
+/**
+ * /addresses/check response.
+ *  - error null + price → in zone, this is the delivery cost
+ *  - error string       → not in zone or otherwise rejected
+ */
+export type ApiCheckAddressResponse = {
+  error: string | null;
+  price: number | null;
+};

@@ -73,7 +73,10 @@ export type Banner = {
 
 export type Address = {
   id: string;
+  /** Display string — usually "<street>, <house>". */
   line: string;
+  street?: string;
+  house?: string;
   entrance?: string;
   floor?: string;
   flat?: string;

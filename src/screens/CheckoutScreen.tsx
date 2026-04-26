@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { CheckCircle2, Loader2, MapPin, Plus, ShieldAlert } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Radio from '@/components/ui/Radio';
@@ -12,9 +12,13 @@ import ScreenHeader from '@/components/ui/ScreenHeader';
 import TextArea from '@/components/ui/TextArea';
 import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
+import { useAddresses, useCheckAddress } from '@/hooks/queries/useAddresses';
 import { useCreateOrder } from '@/hooks/queries/useOrders';
 import { formatPrice } from '@/lib/formatPrice';
+import { cn } from '@/lib/cn';
 import type { DeliveryMethod, PaymentMethod } from '@/types';
+
+const SAVED_ADDRESS_NEW = '__new__';
 
 const schema = z
   .object({
@@ -24,6 +28,8 @@ const schema = z
     phone: z
       .string()
       .regex(/^\+7\s?\d{3}\s?\d{3}-?\d{2}-?\d{2}$/, 'формат: +7 900 555-14-23'),
+    /** Either id of a saved address or SAVED_ADDRESS_NEW. */
+    savedAddressId: z.string().optional(),
     street: z.string().optional(),
     house: z.string().optional(),
     entrance: z.string().optional(),
@@ -34,28 +40,19 @@ const schema = z
     comment: z.string().optional(),
   })
   .superRefine((v, ctx) => {
-    if (v.delivery === 'delivery') {
+    if (v.delivery !== 'delivery') return;
+    // When using a new (inline) address, require street + house.
+    const usingNew = !v.savedAddressId || v.savedAddressId === SAVED_ADDRESS_NEW;
+    if (usingNew) {
       if (!v.street || v.street.length < 2) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['street'],
-          message: 'введите улицу',
-        });
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['street'], message: 'введите улицу' });
       }
       if (!v.house) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['house'],
-          message: 'введите номер дома',
-        });
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['house'], message: 'введите номер дома' });
       }
     }
     if (v.timeMode === 'scheduled' && !v.timeScheduled) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['timeScheduled'],
-        message: 'выберите время',
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['timeScheduled'], message: 'выберите время' });
     }
   });
 
@@ -66,6 +63,10 @@ export default function CheckoutScreen() {
   const { user } = useAuth();
   const { items, total, clear } = useCart();
   const createOrder = useCreateOrder();
+  const checkAddress = useCheckAddress();
+  const addressesQuery = useAddresses();
+  const savedAddresses = addressesQuery.data ?? [];
+
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
@@ -76,6 +77,7 @@ export default function CheckoutScreen() {
       payment: 'card_online',
       name: user?.name ?? '',
       phone: user?.phone ?? '',
+      savedAddressId: SAVED_ADDRESS_NEW,
       street: '',
       house: '',
       entrance: '',
@@ -90,11 +92,54 @@ export default function CheckoutScreen() {
   const delivery = form.watch('delivery');
   const timeMode = form.watch('timeMode');
   const payment = form.watch('payment');
+  const savedAddressId = form.watch('savedAddressId');
+  const usingNewAddress = !savedAddressId || savedAddressId === SAVED_ADDRESS_NEW;
+
+  // Auto-pick the first saved address once it loads, instead of "new".
+  useEffect(() => {
+    if (delivery === 'delivery' && savedAddresses.length > 0 && savedAddressId === SAVED_ADDRESS_NEW) {
+      form.setValue('savedAddressId', savedAddresses[0].id);
+    }
+    // intentionally only on first list arrival
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedAddresses.length]);
+
+  // Re-check the address whenever the chosen saved address or the
+  // inline street/house changes.
+  const street = form.watch('street');
+  const house = form.watch('house');
+  const checkInput = useMemo(() => {
+    if (delivery !== 'delivery') return null;
+    if (!usingNewAddress) {
+      const addr = savedAddresses.find((a) => a.id === savedAddressId);
+      if (!addr?.street || !addr.house) return null;
+      return { street: addr.street, house: addr.house };
+    }
+    if (!street || !house) return null;
+    return { street, house };
+  }, [delivery, usingNewAddress, savedAddressId, savedAddresses, street, house]);
+
+  useEffect(() => {
+    if (!checkInput) {
+      checkAddress.reset();
+      return;
+    }
+    const t = window.setTimeout(() => {
+      checkAddress.mutate(checkInput);
+    }, 400);
+    return () => window.clearTimeout(t);
+    // checkAddress is a stable mutation hook
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkInput?.street, checkInput?.house]);
+
+  const zoneCheck = checkAddress.data;
+  const zoneOk = zoneCheck && !zoneCheck.error;
+  const deliveryFee = zoneOk ? Math.round(zoneCheck.price ?? 0) : 0;
 
   const pickupDiscount = delivery === 'pickup' ? Math.round(total * 0.2) : 0;
   const finalTotal = useMemo(
-    () => Math.max(0, total - pickupDiscount),
-    [total, pickupDiscount],
+    () => Math.max(0, total - pickupDiscount + (delivery === 'delivery' ? deliveryFee : 0)),
+    [total, pickupDiscount, delivery, deliveryFee],
   );
 
   useEffect(() => {
@@ -103,16 +148,46 @@ export default function CheckoutScreen() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     setSubmitError(null);
+
+    if (values.delivery === 'delivery') {
+      // Block submit if zone check failed.
+      if (zoneCheck?.error) {
+        setSubmitError(zoneCheck.error || 'этот адрес вне зоны доставки');
+        return;
+      }
+      // If still pending or never ran, do a synchronous check now.
+      if (!zoneCheck && checkInput) {
+        try {
+          const res = await checkAddress.mutateAsync(checkInput);
+          if (res.error) {
+            setSubmitError(res.error);
+            return;
+          }
+        } catch {
+          setSubmitError('не удалось проверить адрес. попробуйте ещё раз');
+          return;
+        }
+      }
+    }
+
     try {
+      const useSavedId =
+        values.delivery === 'delivery' &&
+        !usingNewAddress &&
+        savedAddressId !== SAVED_ADDRESS_NEW;
+
       const result = await createOrder.mutateAsync({
         items,
         total: finalTotal,
         delivery: values.delivery as DeliveryMethod,
+        addressId: useSavedId ? savedAddressId : undefined,
         address:
-          values.delivery === 'delivery' && values.street && values.house
+          values.delivery === 'delivery' && !useSavedId && values.street && values.house
             ? {
                 id: `addr-${Date.now()}`,
                 line: `${values.street}, ${values.house}`,
+                street: values.street,
+                house: values.house,
                 entrance: values.entrance,
                 floor: values.floor,
                 flat: values.apartment,
@@ -126,8 +201,6 @@ export default function CheckoutScreen() {
         phone: values.phone,
       });
       clear();
-      // Card-online → external payment URL. Backend redirects back to
-      // /payments/<id>/success|failed (handled by PaymentReturnScreen).
       if (result.paymentUrl) {
         window.location.href = result.paymentUrl;
         return;
@@ -141,6 +214,10 @@ export default function CheckoutScreen() {
       setSubmitError(err instanceof Error ? err.message : 'Ошибка отправки заказа');
     }
   });
+
+  const submitDisabled =
+    createOrder.isPending ||
+    (delivery === 'delivery' && (checkAddress.isPending || (zoneCheck && !zoneOk)));
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-paper">
@@ -198,31 +275,116 @@ export default function CheckoutScreen() {
             <h3 className="mb-2 text-[11px] font-medium tracking-[0.14em] text-ink-500 uppercase">
               адрес доставки
             </h3>
-            <div className="flex flex-col gap-3">
-              <Input
-                label="улица"
-                placeholder="Ленинский проспект"
-                {...form.register('street')}
-                error={form.formState.errors.street?.message}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="дом"
-                  placeholder="12"
-                  {...form.register('house')}
-                  error={form.formState.errors.house?.message}
-                />
-                <Input
-                  label="квартира"
-                  placeholder="45"
-                  {...form.register('apartment')}
-                />
+
+            {savedAddresses.length > 0 && (
+              <div className="mb-3 flex flex-col gap-2">
+                {savedAddresses.map((a) => {
+                  const active = savedAddressId === a.id;
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => form.setValue('savedAddressId', a.id)}
+                      className={cn(
+                        'flex items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors',
+                        active
+                          ? 'border-wine bg-wine/5'
+                          : 'border-ink-200 bg-white hover:border-ink-300',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                          active ? 'bg-wine text-cream' : 'bg-cream-soft text-wine',
+                        )}
+                      >
+                        <MapPin size={14} strokeWidth={1.6} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-serif text-[15px] text-ink-900">
+                          {a.line}
+                        </div>
+                        {(a.flat || a.entrance || a.floor) && (
+                          <div className="mt-0.5 truncate text-[11px] text-ink-500">
+                            {a.flat && `кв. ${a.flat}`}
+                            {a.flat && (a.entrance || a.floor) && ' · '}
+                            {a.entrance && `подъезд ${a.entrance}`}
+                            {a.entrance && a.floor && ' · '}
+                            {a.floor && `этаж ${a.floor}`}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => form.setValue('savedAddressId', SAVED_ADDRESS_NEW)}
+                  className={cn(
+                    'flex items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-left transition-colors',
+                    usingNewAddress
+                      ? 'border-wine bg-wine/5 text-wine'
+                      : 'border-ink-200 text-ink-700 hover:border-ink-300',
+                  )}
+                >
+                  <Plus size={14} strokeWidth={1.8} />
+                  <span className="text-[13px]">новый адрес</span>
+                </button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Input label="подъезд" placeholder="2" {...form.register('entrance')} />
-                <Input label="этаж" placeholder="4" {...form.register('floor')} />
+            )}
+
+            {usingNewAddress && (
+              <div className="flex flex-col gap-3">
+                <Input
+                  label="улица"
+                  placeholder="Ленинский проспект"
+                  {...form.register('street')}
+                  error={form.formState.errors.street?.message}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input
+                    label="дом"
+                    placeholder="12"
+                    {...form.register('house')}
+                    error={form.formState.errors.house?.message}
+                  />
+                  <Input
+                    label="квартира"
+                    placeholder="45"
+                    {...form.register('apartment')}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Input label="подъезд" placeholder="2" {...form.register('entrance')} />
+                  <Input label="этаж" placeholder="4" {...form.register('floor')} />
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Zone check status */}
+            {checkAddress.isPending && (
+              <div className="mt-3 flex items-center gap-2 rounded-md bg-cream-soft px-3 py-2 text-[12px] text-ink-700">
+                <Loader2 size={14} className="animate-spin text-wine" />
+                <span>проверяем зону доставки…</span>
+              </div>
+            )}
+            {!checkAddress.isPending && zoneCheck?.error && (
+              <div className="mt-3 flex items-start gap-2 rounded-md bg-danger/10 px-3 py-2 text-[12px] text-danger">
+                <ShieldAlert size={14} className="mt-0.5 shrink-0" strokeWidth={1.8} />
+                <span>{zoneCheck.error}</span>
+              </div>
+            )}
+            {!checkAddress.isPending && zoneOk && (
+              <div className="mt-3 flex items-center justify-between rounded-md bg-success/10 px-3 py-2 text-[12px] text-success">
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 size={14} strokeWidth={1.8} />
+                  адрес в зоне доставки
+                </span>
+                <span className="font-mono">
+                  {deliveryFee > 0 ? `+${formatPrice(deliveryFee)}` : 'бесплатно'}
+                </span>
+              </div>
+            )}
           </motion.section>
         )}
 
@@ -319,6 +481,12 @@ export default function CheckoutScreen() {
               <span className="font-mono">−{formatPrice(pickupDiscount)}</span>
             </div>
           )}
+          {delivery === 'delivery' && deliveryFee > 0 && (
+            <div className="mt-1 flex items-center justify-between text-[13px] text-ink-700">
+              <span>доставка</span>
+              <span className="font-mono">+{formatPrice(deliveryFee)}</span>
+            </div>
+          )}
           <div className="mt-3 flex items-baseline justify-between border-t border-cream-deep pt-3">
             <span className="font-serif text-[20px] text-ink-900">итого</span>
             <span className="font-serif text-[26px] text-wine">
@@ -340,7 +508,7 @@ export default function CheckoutScreen() {
             variant="green"
             fullWidth
             size="lg"
-            disabled={createOrder.isPending}
+            disabled={submitDisabled}
             leftIcon={
               createOrder.isPending ? <Loader2 size={16} className="animate-spin" /> : undefined
             }
