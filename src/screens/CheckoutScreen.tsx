@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCart } from '@/hooks/useCart';
 import { useAddresses, useCheckAddress } from '@/hooks/queries/useAddresses';
 import { useCreateOrder } from '@/hooks/queries/useOrders';
+import { reportError, trackEvent } from '@/lib/analytics';
 import { formatPrice } from '@/lib/formatPrice';
 import { cn } from '@/lib/cn';
 import type { DeliveryMethod, PaymentMethod } from '@/types';
@@ -172,6 +173,15 @@ export default function CheckoutScreen() {
     if (items.length === 0) navigate('/cart', { replace: true });
   }, [items.length, navigate]);
 
+  // Fire once when the user lands on a valid checkout (cart not empty).
+  // This is the funnel-entry event for analytics.
+  useEffect(() => {
+    if (items.length === 0) return;
+    trackEvent('checkout_started', { items: items.length, total });
+    // Intentionally only on first mount with non-empty cart
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Tick down the post-submit cooldown bar so the user can see why the
   // button is locked instead of just a dead button.
   useEffect(() => {
@@ -253,6 +263,13 @@ export default function CheckoutScreen() {
       });
       clear();
       setConfirmOpen(false);
+      trackEvent('order_placed', {
+        order_id: result.orderId,
+        total: finalTotal,
+        payment: values.payment,
+        delivery: values.delivery,
+        items: items.length,
+      });
       if (result.paymentUrl) {
         window.location.href = result.paymentUrl;
         return;
@@ -263,6 +280,7 @@ export default function CheckoutScreen() {
         navigate('/profile/orders', { replace: true });
       }
     } catch (err) {
+      reportError(err, { context: 'checkout_submit', total: finalTotal, payment: values.payment });
       setSubmitError(err instanceof Error ? err.message : 'Ошибка отправки заказа');
       setConfirmOpen(false);
     } finally {

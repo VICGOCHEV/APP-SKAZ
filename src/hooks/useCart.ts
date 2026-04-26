@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { selectCartCount, selectCartTotal, useCartStore } from '@/stores/cart';
 import { useServerCartMutations, useServerCartQuery } from '@/hooks/queries/useServerCart';
 import { useUserStore } from '@/stores/user';
+import { trackEvent } from '@/lib/analytics';
 import type { CartItem, Dish } from '@/types';
 
 type AddOpts = {
@@ -65,6 +66,13 @@ export function useCart(): CartFacade {
         productId: dish.id,
         quantity: portions,
         modifiers: (opts?.modifiers ?? []).map((id) => ({ modifierId: id })),
+      });
+      trackEvent('add_to_cart', {
+        dish_id: dish.id,
+        dish_name: dish.name,
+        price: dish.price,
+        quantity: portions,
+        weighted: dish.isWeighted,
       });
     },
     [addMutation],
@@ -133,11 +141,25 @@ export function useCart(): CartFacade {
     };
   }
 
+  const addDishLocal = useCallback(
+    (dish: Dish, opts?: AddOpts) => {
+      localAddDish(dish, opts);
+      trackEvent('add_to_cart', {
+        dish_id: dish.id,
+        dish_name: dish.name,
+        price: dish.price,
+        quantity: opts?.quantity ?? 1,
+        weighted: dish.isWeighted,
+      });
+    },
+    [localAddDish],
+  );
+
   return {
     items: localItems,
     count: localCount,
     total: localTotal,
-    addDish: localAddDish,
+    addDish: addDishLocal,
     setQuantity: localSetQuantity,
     setWeight: localSetWeight,
     removeAt: localRemoveAt,

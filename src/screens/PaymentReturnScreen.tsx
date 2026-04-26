@@ -7,6 +7,7 @@ import {
   useNotifyPaymentFailed,
   useNotifyPaymentSuccess,
 } from '@/hooks/queries/useOrders';
+import { reportError, trackEvent } from '@/lib/analytics';
 
 /**
  * Landing page after the payment provider redirects back.
@@ -29,9 +30,13 @@ export default function PaymentReturnScreen({ outcome }: { outcome: 'success' | 
       return;
     }
     const run = outcome === 'success' ? success.mutateAsync : failed.mutateAsync;
+    trackEvent(outcome === 'success' ? 'payment_success' : 'payment_failed', { order_id: id });
     run(id)
       .then(() => setPhase('done'))
-      .catch(() => setPhase('error'));
+      .catch((err) => {
+        reportError(err, { context: 'payment_callback', outcome, order_id: id });
+        setPhase('error');
+      });
     // run identity is stable per-mutation hook; we only want to fire once per id
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, outcome]);

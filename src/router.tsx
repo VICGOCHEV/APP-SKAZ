@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Navigate, Route, Routes, useLocation, type Location } from 'react-router-dom';
 import AppShell from '@/components/layout/AppShell';
 import HomeScreen from '@/screens/HomeScreen';
+import { trackPageView } from '@/lib/analytics';
 
 // Lazy-load every non-critical route. HomeScreen + AppShell stay eager so
 // the first paint doesn't wait on extra round-trips. Each lazy() call gets
@@ -39,6 +40,15 @@ function ScrollToTop() {
     if (pathname.startsWith('/dish/') || prev.startsWith('/dish/')) return;
     window.scrollTo(0, 0);
   }, [pathname]);
+  return null;
+}
+
+/** Pings Yandex.Metrika on every pathname change. No-op without YM ID. */
+function PageViewTracker() {
+  const { pathname, search } = useLocation();
+  useEffect(() => {
+    trackPageView(pathname + search);
+  }, [pathname, search]);
   return null;
 }
 
@@ -193,6 +203,7 @@ export default function AppRouter() {
   return (
     <>
       <ScrollToTop />
+      <PageViewTracker />
       <MainRoutes location={mainLocation} />
       {onDishRoute && (
         <Suspense fallback={null}>

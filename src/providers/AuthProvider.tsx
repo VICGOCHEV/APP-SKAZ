@@ -12,6 +12,7 @@ import { addToCart as apiAddToCart, getCart as apiGetCart } from '@/api/cart';
 import { getAuthToken, USE_MOCKS } from '@/api/client';
 import { queryKeys } from '@/hooks/queries/queryKeys';
 import { useEnvironment } from '@/hooks/useEnvironment';
+import { identifyUser, trackEvent } from '@/lib/analytics';
 import { queryClient } from '@/lib/queryClient';
 import { useCartStore } from '@/stores/cart';
 import { useUserStore } from '@/stores/user';
@@ -110,12 +111,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) useUserStore.setState({ status: 'unauthenticated' });
   }, [isReady, environment, user, setLoading, setUser, setError]);
 
+  // Keep Sentry's user context in sync with the auth state so error
+  // events are easier to triage.
+  useEffect(() => {
+    identifyUser(user ?? null);
+  }, [user]);
+
   const login = useCallback(
     async (email: string, password: string) => {
       setLoading();
       try {
         const u = await loginWithEmail(email, password);
         setUser(u);
+        trackEvent('login', { method: 'email' });
         if (!USE_MOCKS) await syncLocalCartToServer();
         return u;
       } catch (err) {
@@ -132,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const u = await register(input);
         setUser(u);
+        trackEvent('register');
         if (!USE_MOCKS) await syncLocalCartToServer();
         return u;
       } catch (err) {
@@ -147,6 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiLogout();
     } finally {
       clear();
+      identifyUser(null);
       // Drop cached server cart — the next mount will be in guest mode.
       queryClient.removeQueries({ queryKey: queryKeys.cart });
     }
