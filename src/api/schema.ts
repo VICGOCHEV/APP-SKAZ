@@ -168,3 +168,46 @@ export type ApiLoginResponse = {
   token_type: 'bearer' | string;
   expires_in: number;
 };
+
+/* ================================
+ * Cart
+ * ================================ */
+
+export type ApiCartItemModifier = {
+  modifier: ApiModifier;
+  quantity: number;
+};
+
+export type ApiCartItem = {
+  id: string;
+  quantity: number;
+  total: string | number;
+  product: ApiProduct;
+  modifiers?: ApiCartItemModifier[];
+};
+
+export type ApiCart = {
+  total: string | number;
+  items: ApiCartItem[];
+};
+
+export type ApiAddToCartModifier = {
+  modifier_id: string;
+  quantity?: number;
+};
+
+export type ApiAddToCartRequest = {
+  product_id: string;
+  quantity?: number;
+  modifiers?: ApiAddToCartModifier[];
+};
+
+export type ApiCartRemoveRequest = {
+  cart_item_ids: string[];
+};
+
+export type ApiAddModifierToCartItemRequest = {
+  modifier_id: string;
+  quantity?: number;
+  cart_item_id: string;
+};

@@ -81,6 +81,8 @@ export type Address = {
 };
 
 export type CartItem = {
+  /** Server cart_item_id (only set when synced with backend /cart). */
+  serverId?: string;
   dishId: string;
   quantity: number;
   weight?: number;

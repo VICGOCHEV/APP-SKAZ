@@ -11,4 +11,5 @@ export const queryKeys = {
   promo: (id: string) => ['promos', id] as const,
   order: (id: string) => ['orders', id] as const,
   orderHistory: ['orders', 'history'] as const,
+  cart: ['cart'] as const,
 };

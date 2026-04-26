@@ -1,12 +1,14 @@
 import type {
   ApiAttachment,
+  ApiCart,
+  ApiCartItem,
   ApiCategory,
   ApiModifierGroup,
   ApiNutrition,
   ApiProduct,
   ApiUser,
 } from './schema';
-import type { Category, Dish, Modifier, Nutrients, User } from '@/types';
+import type { CartItem, Category, Dish, Modifier, Nutrients, User } from '@/types';
 
 /** Parse any number-ish value (string | number | null) to finite number or fallback. */
 function num(value: unknown, fallback = 0): number {
@@ -133,6 +135,29 @@ export function apiCategoryToCategory(c: ApiCategory, index = 0): Category {
     photoUrl: pickPhoto(c.attachments, '300'),
     order: index,
   };
+}
+
+/**
+ * Map a single CartItemData → frontend CartItem.
+ * `serverId` carries the backend cart_item_id so we can target it later
+ * for removal or modifier edits.
+ */
+export function apiCartItemToCartItem(item: ApiCartItem): CartItem {
+  return {
+    serverId: item.id,
+    dishId: item.product?.id ?? '',
+    quantity: Math.max(1, Math.round(num(item.quantity, 1))),
+    modifiers: (item.modifiers ?? [])
+      .map((m) => m.modifier?.id)
+      .filter((id): id is string => Boolean(id)),
+    price: Math.round(num(item.total)),
+  };
+}
+
+/** Map full CartData → list of CartItems (server `total` is recomputable from items). */
+export function apiCartToCartItems(cart: ApiCart | null | undefined): CartItem[] {
+  if (!cart?.items?.length) return [];
+  return cart.items.map(apiCartItemToCartItem);
 }
 
 /** Map backend ApiUser → frontend User. */

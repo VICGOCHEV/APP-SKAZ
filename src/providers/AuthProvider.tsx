@@ -8,10 +8,46 @@ import {
   register,
   type RegisterInput,
 } from '@/api/auth';
+import { addToCart as apiAddToCart, getCart as apiGetCart } from '@/api/cart';
 import { getAuthToken, USE_MOCKS } from '@/api/client';
+import { queryKeys } from '@/hooks/queries/queryKeys';
 import { useEnvironment } from '@/hooks/useEnvironment';
+import { queryClient } from '@/lib/queryClient';
+import { useCartStore } from '@/stores/cart';
 import { useUserStore } from '@/stores/user';
 import type { AuthStatus, User } from '@/types';
+
+/**
+ * After a user becomes authenticated, replay any locally-stored cart items
+ * into the server cart, then clear the local store and prime the TanStack
+ * cache with the authoritative server response.
+ *
+ * Best-effort: an individual item that fails to add (product gone, 422...)
+ * is silently skipped — the rest still merge.
+ */
+async function syncLocalCartToServer() {
+  const localItems = useCartStore.getState().items;
+  if (localItems.length > 0) {
+    for (const item of localItems) {
+      try {
+        await apiAddToCart({
+          productId: item.dishId,
+          quantity: item.quantity,
+          modifiers: item.modifiers.map((id) => ({ modifierId: id })),
+        });
+      } catch {
+        // skip failed item, continue merging
+      }
+    }
+    useCartStore.getState().clear();
+  }
+  try {
+    const fresh = await apiGetCart();
+    queryClient.setQueryData(queryKeys.cart, fresh ?? []);
+  } catch {
+    queryClient.invalidateQueries({ queryKey: queryKeys.cart });
+  }
+}
 
 type AuthContextValue = {
   user: User | null;
@@ -61,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading();
         try {
           setUser(await getMe());
+          await syncLocalCartToServer();
         } catch {
           // Token invalid — client interceptor already cleared it
           useUserStore.setState({ status: 'unauthenticated', user: null });
@@ -79,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const u = await loginWithEmail(email, password);
         setUser(u);
+        if (!USE_MOCKS) await syncLocalCartToServer();
         return u;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Неверный логин или пароль');
@@ -94,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const u = await register(input);
         setUser(u);
+        if (!USE_MOCKS) await syncLocalCartToServer();
         return u;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Не удалось зарегистрироваться');
@@ -108,6 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiLogout();
     } finally {
       clear();
+      // Drop cached server cart — the next mount will be in guest mode.
+      queryClient.removeQueries({ queryKey: queryKeys.cart });
     }
   }, [clear]);
 
