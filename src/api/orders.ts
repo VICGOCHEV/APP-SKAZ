@@ -120,13 +120,24 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     return { paymentUrl: data, orderId: match?.[0] };
   }
 
-  // No payment URL → backend is in test mode (sandbox payments). Mirror what
-  // the other production site does — fire /payments/{id}/success to push the
-  // order to iiko. Surface any failure to the caller (so Sentry captures it
-  // and the UI can show a real error instead of pretending everything's fine).
+  // No payment URL → backend is in PayKeeper sandbox mode. The production site
+  // finalizes orders by visiting the Laravel WEB route GET /payments/{id}/success
+  // (not the JSON /api/v1 endpoint) — that controller marks the order paid and
+  // pushes it to iiko. We hit the same route via a same-origin proxy in
+  // vercel.json / vite.config.ts so it works without CORS and without leaving
+  // the SPA. The HTML response is ignored.
   const orderId = typeof data === 'string' ? data : undefined;
   if (orderId) {
-    await apiClient.post(`/payments/${encodeURIComponent(orderId)}/success`);
+    try {
+      await fetch(`/api-finalize/${encodeURIComponent(orderId)}`, {
+        method: 'GET',
+        credentials: 'omit',
+      });
+    } catch {
+      // Best-effort: if finalization fails the order is still saved server-side
+      // and the user can retry from the order screen. Real errors surface
+      // through Sentry breadcrumbs on the next /orders/:id fetch.
+    }
   }
   return { orderId };
 }

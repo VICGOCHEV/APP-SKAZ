@@ -40,6 +40,16 @@ export default defineConfig(({ mode }) => {
               changeOrigin: true,
               secure: false,
             },
+            // Mirror of the Vercel /api-finalize rewrite: same-origin URL on
+            // dev that proxies to the backend's web-level /payments/.../success
+            // page, which is where iiko-push happens in test mode.
+            '/api-finalize': {
+              target: proxyTarget,
+              changeOrigin: true,
+              secure: false,
+              rewrite: (path) =>
+                path.replace(/^\/api-finalize\/([^/?]+)$/, '/payments/$1/success'),
+            },
           }
         : undefined,
     },

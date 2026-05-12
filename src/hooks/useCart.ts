@@ -54,7 +54,7 @@ export function useCart(): CartFacade {
 
   const qc = useQueryClient();
   const serverQuery = useServerCartQuery();
-  const { addMutation, removeMutation } = useServerCartMutations();
+  const { addMutation, removeMutation, changeQuantityMutation } = useServerCartMutations();
 
   const serverItems = useMemo(() => serverQuery.data ?? [], [serverQuery.data]);
   const serverCount = serverItems.reduce((s, it) => s + it.quantity, 0);
@@ -82,13 +82,12 @@ export function useCart(): CartFacade {
   );
 
   /**
-   * Backend `POST /cart` has **additive** semantics ("add N to current line"),
-   * not "set total to N". To honor a "set quantity to N" intent from the UI,
-   * we DELETE the existing cart line and then POST the new quantity.
+   * Set absolute quantity for a cart line via PATCH /cart/item — the proper
+   * "change quantity" endpoint exposed by `cart.changeQuantity` on the backend.
+   * Cache is patched optimistically so the stepper feels instant; on failure
+   * we invalidate to resync with the server.
    *
-   * The UI updates optimistically (cache patched immediately) so users don't
-   * see the cart flash to empty between DELETE and the follow-up POST. On any
-   * mutation failure we invalidate the query so the next refetch resyncs.
+   * A quantity of 0 deletes the line (PATCH would 422 — use DELETE instead).
    */
   const setQuantityServer = useCallback(
     async (index: number, dish: Dish, quantity: number) => {
@@ -104,22 +103,26 @@ export function useCart(): CartFacade {
       });
 
       try {
-        await removeMutation.mutateAsync([item.serverId]);
-        if (quantity > 0) {
-          await addMutation.mutateAsync({
-            productId: dish.id,
+        if (quantity <= 0) {
+          await removeMutation.mutateAsync([item.serverId]);
+        } else {
+          await changeQuantityMutation.mutateAsync({
+            cartItemId: item.serverId,
             quantity,
-            modifiers: item.modifiers.map((id) => ({ modifierId: id })),
           });
         }
       } catch {
         qc.invalidateQueries({ queryKey: queryKeys.cart });
       }
     },
-    [serverItems, addMutation, removeMutation, qc],
+    [serverItems, removeMutation, changeQuantityMutation, qc],
   );
 
-  /** Same delete-then-recreate dance for weighted items (slider adjusts portions). */
+  /**
+   * Weight slider — for weighted dishes (мангал, гриль) the cart line stores
+   * integer portions in `quantity`, displayed as grams = portions × baseWeight.
+   * Adjusting weight = adjusting portion count via the same PATCH endpoint.
+   */
   const setWeightServer = useCallback(
     async (index: number, dish: Dish, weight: number) => {
       const item = serverItems[index];
@@ -140,17 +143,15 @@ export function useCart(): CartFacade {
       });
 
       try {
-        await removeMutation.mutateAsync([item.serverId]);
-        await addMutation.mutateAsync({
-          productId: dish.id,
+        await changeQuantityMutation.mutateAsync({
+          cartItemId: item.serverId,
           quantity: portions,
-          modifiers: item.modifiers.map((id) => ({ modifierId: id })),
         });
       } catch {
         qc.invalidateQueries({ queryKey: queryKeys.cart });
       }
     },
-    [serverItems, addMutation, removeMutation, qc],
+    [serverItems, changeQuantityMutation, qc],
   );
 
   const removeAtServer = useCallback(
@@ -201,7 +202,10 @@ export function useCart(): CartFacade {
         /* not used in server mode */
       },
       clear: clearServer,
-      isMutating: addMutation.isPending || removeMutation.isPending,
+      isMutating:
+        addMutation.isPending ||
+        removeMutation.isPending ||
+        changeQuantityMutation.isPending,
     };
   }
 

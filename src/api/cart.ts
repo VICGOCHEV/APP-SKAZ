@@ -61,6 +61,24 @@ export async function removeFromCart(cartItemIds: string[]): Promise<CartItem[]>
   return (await getCart()) ?? [];
 }
 
+/**
+ * Set the absolute quantity for an existing cart line.
+ * Backend route `cart.changeQuantity` — `PATCH /cart/item` with body
+ * `{ cart_item_id, quantity }`. Returns the refreshed cart via GET /cart so
+ * `total` and modifiers stay in sync with server truth.
+ */
+export async function changeCartItemQuantity(input: {
+  cartItemId: string;
+  quantity: number;
+}): Promise<CartItem[]> {
+  if (USE_MOCKS) return mockDelay([], 200);
+  await apiClient.patch('/cart/item', {
+    cart_item_id: input.cartItemId,
+    quantity: input.quantity,
+  });
+  return (await getCart()) ?? [];
+}
+
 /** Attach a modifier to an existing cart item (edits an already-added item). */
 export async function addModifierToCartItem(input: {
   cartItemId: string;

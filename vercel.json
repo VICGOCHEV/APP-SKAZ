@@ -13,7 +13,11 @@
       "destination": "https://skazka-vostoka.vtheory.ru/storage/:path*"
     },
     {
-      "source": "/((?!api/|storage/).*)",
+      "source": "/api-finalize/:order",
+      "destination": "https://skazka-vostoka.vtheory.ru/payments/:order/success"
+    },
+    {
+      "source": "/((?!api/|storage/|api-finalize/).*)",
       "destination": "/"
     }
   ]
