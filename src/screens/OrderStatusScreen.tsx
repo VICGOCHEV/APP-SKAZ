@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Check, CheckCircle2, ChefHat, MapPin, Package, Truck } from 'lucide-react';
+import { Check, CheckCircle2, ChefHat, Copy, MapPin, Package, Truck } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import Skeleton from '@/components/ui/Skeleton';
@@ -55,8 +56,30 @@ export default function OrderStatusScreen() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: order, isPending } = useOrder(id);
+  const [copied, setCopied] = useState(false);
 
   const currentStepIdx = order ? STATUS_FLOW.indexOf(order.status) : -1;
+
+  const copyDebugInfo = async () => {
+    if (!order) return;
+    const text = [
+      `order_id: ${order.id}`,
+      `время: ${new Date(order.createdAt).toLocaleString('ru-RU')}`,
+      `сумма: ${order.total} ₽`,
+      `оплата: ${order.payment}`,
+      `доставка: ${order.delivery}`,
+      order.address?.line ? `адрес: ${order.address.line}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* Safari requires interaction context; clipboard might fail silently */
+    }
+  };
 
   return (
     <div className="flex flex-col bg-paper">
@@ -97,6 +120,23 @@ export default function OrderStatusScreen() {
               <div className="mt-0.5 text-[12px] text-cream/80">
                 мы уже передаём его на кухню — следите за статусом ниже
               </div>
+              <button
+                type="button"
+                onClick={copyDebugInfo}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-cream/15 px-2.5 py-1 text-[11px] font-medium text-cream/90 hover:bg-cream/25"
+              >
+                {copied ? (
+                  <>
+                    <Check size={11} strokeWidth={2.4} />
+                    скопировано
+                  </>
+                ) : (
+                  <>
+                    <Copy size={11} strokeWidth={2} />
+                    скопировать данные заказа
+                  </>
+                )}
+              </button>
             </div>
           </motion.section>
 
