@@ -111,13 +111,29 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   if (input.email) body.email = input.email.trim();
 
   const { data } = await apiClient.post<ApiCreateOrderResponse>('/orders', body);
+
   // Backend returns either a payment URL or a bare order id.
   if (typeof data === 'string' && /^https?:\/\//i.test(data)) {
-    // Try to extract trailing UUID-like segment as a probable order id.
+    // Real payment URL — frontend redirects to provider, /payments/.../success
+    // is fired from PaymentReturnScreen when the provider redirects back.
     const match = data.match(/[0-9a-f-]{32,}/i);
     return { paymentUrl: data, orderId: match?.[0] };
   }
-  return { orderId: typeof data === 'string' ? data : undefined };
+
+  // No payment URL → backend is in test mode (sandbox payments). The other
+  // production site finalizes orders by hitting /payments/{id}/success
+  // immediately after /orders so the order propagates to iiko without a real
+  // payment step. Mirror that behavior here.
+  const orderId = typeof data === 'string' ? data : undefined;
+  if (orderId) {
+    try {
+      await apiClient.post(`/payments/${encodeURIComponent(orderId)}/success`);
+    } catch {
+      // If the backend doesn't expect this call (e.g. real payment expected),
+      // it'll just 4xx — order is still created server-side, user can retry.
+    }
+  }
+  return { orderId };
 }
 
 export async function getOrderById(id: string): Promise<Order> {
