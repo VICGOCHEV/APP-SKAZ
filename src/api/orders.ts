@@ -120,25 +120,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     return { paymentUrl: data, orderId: match?.[0] };
   }
 
-  // No payment URL → backend is in PayKeeper sandbox mode. The production site
-  // finalizes orders by visiting the Laravel WEB route GET /payments/{id}/success
-  // (not the JSON /api/v1 endpoint) — that controller marks the order paid and
-  // pushes it to iiko. We hit the same route via a same-origin proxy in
-  // vercel.json / vite.config.ts so it works without CORS and without leaving
-  // the SPA. The HTML response is ignored.
+  // No payment URL → backend's PayKeeper integration didn't issue one. The
+  // iiko-push trigger is currently unknown (the Laravel WEB route /payments/
+  // {id}/success returns 404 when hit anonymously). Until the backend dev
+  // shares the actual finalization endpoint, we just return the orderId and
+  // let the user see "ваш заказ принят" — but the order may sit unpushed
+  // until backend manually completes it.
   const orderId = typeof data === 'string' ? data : undefined;
-  if (orderId) {
-    try {
-      await fetch(`/api-finalize/${encodeURIComponent(orderId)}`, {
-        method: 'GET',
-        credentials: 'omit',
-      });
-    } catch {
-      // Best-effort: if finalization fails the order is still saved server-side
-      // and the user can retry from the order screen. Real errors surface
-      // through Sentry breadcrumbs on the next /orders/:id fetch.
-    }
-  }
   return { orderId };
 }
 
