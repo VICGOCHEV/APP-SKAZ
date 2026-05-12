@@ -117,10 +117,10 @@ export default function OrderHistoryScreen() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="font-serif text-[18px] leading-tight text-ink-900">
-                    заказ №{order.id}
-                  </div>
-                  <div className="mt-0.5 text-[12px] text-ink-500">
                     {formatCreated(order.createdAt)}
+                  </div>
+                  <div className="mt-0.5 font-mono text-[11px] tracking-[0.06em] text-ink-400">
+                    №{order.id.slice(-6).toUpperCase()}
                   </div>
                 </div>
                 <span

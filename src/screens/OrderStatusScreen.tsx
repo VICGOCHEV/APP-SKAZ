@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Check, ChefHat, MapPin, Package, Truck } from 'lucide-react';
+import { Check, CheckCircle2, ChefHat, MapPin, Package, Truck } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ScreenHeader from '@/components/ui/ScreenHeader';
 import Skeleton from '@/components/ui/Skeleton';
@@ -62,7 +62,7 @@ export default function OrderStatusScreen() {
     <div className="flex flex-col bg-paper">
       <ScreenHeader
         variant="back"
-        title={order ? `заказ №${order.id}` : 'заказ'}
+        title={order ? `заказ №${order.id.slice(-6).toUpperCase()}` : 'заказ'}
         subtitle={order?.delivery === 'pickup' ? 'самовывоз' : 'доставка'}
         onBack={() => navigate('/')}
       />
@@ -77,12 +77,35 @@ export default function OrderStatusScreen() {
         <div className="p-6 text-center text-[13px] text-danger">заказ не найден</div>
       ) : (
         <>
+          {/* Success banner — confirms the order was accepted */}
+          <motion.section
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 0.8, 0.3, 1] }}
+            className="mx-4 mt-3 flex items-center gap-3 rounded-lg bg-forest p-4 text-cream shadow-[0_12px_30px_-12px_rgba(31,74,42,0.55)]"
+          >
+            <motion.span
+              initial={{ scale: 0.4, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', damping: 16, stiffness: 240, delay: 0.15 }}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cream/15"
+            >
+              <CheckCircle2 size={22} strokeWidth={1.8} />
+            </motion.span>
+            <div className="min-w-0 flex-1">
+              <div className="font-serif text-[20px] leading-tight">ваш заказ принят</div>
+              <div className="mt-0.5 text-[12px] text-cream/80">
+                мы уже передаём его на кухню — следите за статусом ниже
+              </div>
+            </div>
+          </motion.section>
+
           {/* Hero summary */}
           <motion.section
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 0.8, 0.3, 1] }}
-            className="mx-4 mt-2 rounded-lg bg-gradient-to-br from-cream to-cream-deep p-5"
+            transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 0.8, 0.3, 1] }}
+            className="mx-4 mt-3 rounded-lg bg-gradient-to-br from-cream to-cream-deep p-5"
           >
             <div className="font-mono text-[10px] tracking-[0.18em] text-wine uppercase">
               сумма заказа
