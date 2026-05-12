@@ -285,6 +285,14 @@ export default function CheckoutScreen() {
         delivery: values.delivery,
         items: items.length,
       });
+      // Backend returned a path inside our SPA (test mode / no Alfa) — stay
+      // inside React Router so PaymentReturnScreen mounts and fires the iiko
+      // push. Skipping window.location avoids a full-page reload that would
+      // land on whatever frontend_url the backend has configured.
+      if (result.spaPath) {
+        navigate(result.spaPath, { replace: true });
+        return;
+      }
       if (result.paymentUrl) {
         window.location.href = result.paymentUrl;
         return;

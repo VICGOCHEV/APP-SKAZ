@@ -44,6 +44,14 @@ export type CreateOrderResult = {
   orderId?: string;
   /** External payment URL (CARD/SBP) — frontend should redirect. */
   paymentUrl?: string;
+  /**
+   * SPA-relative path the frontend should navigate to via React Router after a
+   * successful POST /orders. Set when the backend returned a URL pointing to a
+   * known frontend route like `/order/{id}/success` — we extract the path and
+   * stay inside the SPA instead of doing a full-page redirect that hits a
+   * potentially-foreign `frontend_url`.
+   */
+  spaPath?: string;
 };
 
 /** Frontend → backend payment enum. */
@@ -112,20 +120,28 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
   const { data } = await apiClient.post<ApiCreateOrderResponse>('/orders', body);
 
-  // Backend returns either a payment URL or a bare order id.
+  // Backend returns one of:
+  //   (A) A URL targeting a known frontend route: `<frontend_url>/order/<id>/(success|failed)`
+  //       — currently the test-mode shortcut (no Alfa payment yet). We don't want a
+  //       full-page redirect (frontend_url might point at the legacy site without
+  //       our SPA routes), so we extract the SPA path and let CheckoutScreen
+  //       navigate via React Router. On our SPA, the /order/:id/success route
+  //       mounts PaymentReturnScreen which fires POST /payments/:id/success to
+  //       trigger the iiko push.
+  //   (B) A URL targeting an external payment provider (real Alfa, PayKeeper, …)
+  //       — true redirect via window.location.href, provider handles it and
+  //       eventually 302s back to <frontend_url>/order/<id>/success.
+  //   (C) A bare order id — no follow-up needed (purely server-driven flow).
   if (typeof data === 'string' && /^https?:\/\//i.test(data)) {
-    // Real payment URL — frontend redirects to provider, /payments/.../success
-    // is fired from PaymentReturnScreen when the provider redirects back.
-    const match = data.match(/[0-9a-f-]{32,}/i);
-    return { paymentUrl: data, orderId: match?.[0] };
+    const spaMatch = data.match(/\/order\/([0-9a-f-]{32,})\/(success|failed)/i);
+    if (spaMatch) {
+      const [, id, outcome] = spaMatch;
+      return { orderId: id, spaPath: `/order/${id}/${outcome.toLowerCase()}` };
+    }
+    const idMatch = data.match(/[0-9a-f-]{32,}/i);
+    return { paymentUrl: data, orderId: idMatch?.[0] };
   }
 
-  // No payment URL → backend's PayKeeper integration didn't issue one. The
-  // iiko-push trigger is currently unknown (the Laravel WEB route /payments/
-  // {id}/success returns 404 when hit anonymously). Until the backend dev
-  // shares the actual finalization endpoint, we just return the orderId and
-  // let the user see "ваш заказ принят" — but the order may sit unpushed
-  // until backend manually completes it.
   const orderId = typeof data === 'string' ? data : undefined;
   return { orderId };
 }

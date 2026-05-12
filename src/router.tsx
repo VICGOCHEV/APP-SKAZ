@@ -179,6 +179,19 @@ function MainRoutes({ location }: { location: Location }) {
           path="/payments/:id/failed"
           element={<AnimatedPage><PaymentReturnScreen outcome="failed" /></AnimatedPage>}
         />
+        {/*
+          Backend in test mode (no Alfa) sends users directly to
+          `frontend_url/order/{id}/success`. We mount the same return screen
+          here so it fires POST /payments/{id}/success → iiko push.
+        */}
+        <Route
+          path="/order/:id/success"
+          element={<AnimatedPage><PaymentReturnScreen outcome="success" /></AnimatedPage>}
+        />
+        <Route
+          path="/order/:id/failed"
+          element={<AnimatedPage><PaymentReturnScreen outcome="failed" /></AnimatedPage>}
+        />
         <Route path="/profile/chat" element={<AnimatedPage><ChatScreen /></AnimatedPage>} />
         <Route path="/login" element={<AnimatedPage><LoginScreen /></AnimatedPage>} />
         <Route path="/stories/:id" element={<StoryScreen />} />
