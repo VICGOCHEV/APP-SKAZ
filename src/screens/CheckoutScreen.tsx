@@ -558,11 +558,15 @@ export default function CheckoutScreen() {
             способ оплаты
           </h3>
           <div className="flex flex-col gap-2">
+            {/*
+              Restaurant only accepts online card payments — no cash or
+              card-to-courier flow exists on the backend / iiko side yet.
+              When the restaurant enables either of those options server-side,
+              re-add them here and map to ApiOrderPaymentMethod in toApiPayment.
+            */}
             {(
               [
                 { value: 'card_online', label: 'картой онлайн' },
-                { value: 'cash', label: 'наличными курьеру' },
-                { value: 'card_courier', label: 'картой курьеру' },
               ] as const
             ).map((opt) => (
               <Radio
