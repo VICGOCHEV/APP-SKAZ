@@ -78,35 +78,51 @@ export function useCart(): CartFacade {
     [addMutation],
   );
 
+  /**
+   * Backend `POST /cart` has **additive** semantics ("add N to current line"),
+   * not "set total to N". To honor a "set quantity to N" intent from the UI,
+   * we first DELETE the existing cart line and then POST the new quantity.
+   * Two round-trips per click, but it keeps the UI math correct — otherwise
+   * decrementing 5→4 would actually post +4 and balloon the line to 9.
+   */
   const setQuantityServer = useCallback(
-    (index: number, dish: Dish, quantity: number) => {
+    async (index: number, dish: Dish, quantity: number) => {
       const item = serverItems[index];
-      if (!item) return;
-      if (quantity <= 0 && item.serverId) {
-        removeMutation.mutate([item.serverId]);
-        return;
+      if (!item?.serverId) return;
+      try {
+        await removeMutation.mutateAsync([item.serverId]);
+        if (quantity > 0) {
+          await addMutation.mutateAsync({
+            productId: dish.id,
+            quantity,
+            modifiers: item.modifiers.map((id) => ({ modifierId: id })),
+          });
+        }
+      } catch {
+        // mutation hooks already surface errors; nothing to do here
       }
-      addMutation.mutate({
-        productId: dish.id,
-        quantity,
-        modifiers: item.modifiers.map((id) => ({ modifierId: id })),
-      });
     },
     [serverItems, addMutation, removeMutation],
   );
 
+  /** Same delete-then-recreate dance for weighted items (slider adjusts portions). */
   const setWeightServer = useCallback(
-    (index: number, dish: Dish, weight: number) => {
+    async (index: number, dish: Dish, weight: number) => {
       const item = serverItems[index];
-      if (!item || !dish.baseWeight) return;
+      if (!item?.serverId || !dish.baseWeight) return;
       const portions = Math.max(1, Math.round(weight / dish.baseWeight));
-      addMutation.mutate({
-        productId: dish.id,
-        quantity: portions,
-        modifiers: item.modifiers.map((id) => ({ modifierId: id })),
-      });
+      try {
+        await removeMutation.mutateAsync([item.serverId]);
+        await addMutation.mutateAsync({
+          productId: dish.id,
+          quantity: portions,
+          modifiers: item.modifiers.map((id) => ({ modifierId: id })),
+        });
+      } catch {
+        // see above
+      }
     },
-    [serverItems, addMutation],
+    [serverItems, addMutation, removeMutation],
   );
 
   const removeAtServer = useCallback(
