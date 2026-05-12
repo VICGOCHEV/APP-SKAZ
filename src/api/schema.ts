@@ -238,6 +238,8 @@ export type ApiCreateOrderRequest = {
   address_id?: string;
   phone?: string;
   name?: string;
+  /** Not in the public OpenAPI spec but the live backend requires it. */
+  email?: string;
   payment: ApiOrderPaymentMethod;
   type?: ApiOrderType;
   comment?: string;

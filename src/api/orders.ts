@@ -35,6 +35,8 @@ export type CreateOrderInput = {
   /** Required when posting as a guest. */
   name?: string;
   phone?: string;
+  /** Backend currently requires email even for authenticated users. */
+  email?: string;
 };
 
 export type CreateOrderResult = {
@@ -106,6 +108,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     // so normalize here before sending.
     body.phone = normalizePhone(input.phone);
   }
+  if (input.email) body.email = input.email.trim();
 
   const { data } = await apiClient.post<ApiCreateOrderResponse>('/orders', body);
   // Backend returns either a payment URL or a bare order id.

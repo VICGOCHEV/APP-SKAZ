@@ -48,6 +48,7 @@ const schema = z
     phone: z
       .string()
       .regex(/^\+7\s?\d{3}\s?\d{3}-?\d{2}-?\d{2}$/, 'формат: +7 900 555-14-23'),
+    email: z.string().email('введите email').or(z.literal('')),
     /** Either id of a saved address or SAVED_ADDRESS_NEW. */
     savedAddressId: z.string().optional(),
     street: z.string().optional(),
@@ -60,6 +61,9 @@ const schema = z
     comment: z.string().optional(),
   })
   .superRefine((v, ctx) => {
+    if (!v.email) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['email'], message: 'введите email' });
+    }
     if (v.delivery !== 'delivery') return;
     // When using a new (inline) address, require street + house.
     const usingNew = !v.savedAddressId || v.savedAddressId === SAVED_ADDRESS_NEW;
@@ -104,6 +108,7 @@ export default function CheckoutScreen() {
       payment: 'card_online',
       name: user?.name ?? '',
       phone: user?.phone ?? '',
+      email: user?.email ?? '',
       savedAddressId: SAVED_ADDRESS_NEW,
       street: '',
       house: '',
@@ -115,6 +120,15 @@ export default function CheckoutScreen() {
       comment: '',
     },
   });
+
+  // When the user logs in after the form mounts, hydrate name/phone/email
+  // so they don't have to retype anything that's already in the profile.
+  useEffect(() => {
+    if (user?.name) form.setValue('name', user.name);
+    if (user?.phone) form.setValue('phone', user.phone);
+    if (user?.email) form.setValue('email', user.email);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const delivery = form.watch('delivery');
   const timeMode = form.watch('timeMode');
@@ -260,6 +274,7 @@ export default function CheckoutScreen() {
         comment: values.comment,
         name: values.name,
         phone: values.phone,
+        email: values.email || user?.email,
       });
       clear();
       setConfirmOpen(false);
@@ -494,6 +509,15 @@ export default function CheckoutScreen() {
               inputMode="tel"
               {...form.register('phone')}
               error={form.formState.errors.phone?.message}
+            />
+            <Input
+              label="email"
+              placeholder="you@example.com"
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              {...form.register('email')}
+              error={form.formState.errors.email?.message}
             />
           </div>
         </section>
