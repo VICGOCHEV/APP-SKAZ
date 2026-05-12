@@ -120,18 +120,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
     return { paymentUrl: data, orderId: match?.[0] };
   }
 
-  // No payment URL → backend is in test mode (sandbox payments). The other
-  // production site finalizes orders by hitting /payments/{id}/success
-  // immediately after /orders so the order propagates to iiko without a real
-  // payment step. Mirror that behavior here.
+  // No payment URL → backend is in test mode (sandbox payments). Mirror what
+  // the other production site does — fire /payments/{id}/success to push the
+  // order to iiko. Surface any failure to the caller (so Sentry captures it
+  // and the UI can show a real error instead of pretending everything's fine).
   const orderId = typeof data === 'string' ? data : undefined;
   if (orderId) {
-    try {
-      await apiClient.post(`/payments/${encodeURIComponent(orderId)}/success`);
-    } catch {
-      // If the backend doesn't expect this call (e.g. real payment expected),
-      // it'll just 4xx — order is still created server-side, user can retry.
-    }
+    await apiClient.post(`/payments/${encodeURIComponent(orderId)}/success`);
   }
   return { orderId };
 }
