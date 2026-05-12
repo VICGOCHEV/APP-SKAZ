@@ -1,5 +1,6 @@
 import { apiClient, mockDelay, USE_MOCKS } from './client';
 import { apiCartToCartItems, apiOrderToOrder } from './adapters';
+import { normalizePhone } from './auth';
 import type {
   Address,
   CartItem,
@@ -98,8 +99,13 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
   } else if (input.delivery === 'delivery') {
     body.address = inlineFromAddress(input.address);
   }
-  if (input.name) body.name = input.name;
-  if (input.phone) body.phone = input.phone;
+  if (input.name) body.name = input.name.trim();
+  if (input.phone) {
+    // Backend expects "79001234567" (11 digits, no +/spaces/dashes).
+    // The checkout form keeps the masked "+7 900 555-14-23" string,
+    // so normalize here before sending.
+    body.phone = normalizePhone(input.phone);
+  }
 
   const { data } = await apiClient.post<ApiCreateOrderResponse>('/orders', body);
   // Backend returns either a payment URL or a bare order id.
