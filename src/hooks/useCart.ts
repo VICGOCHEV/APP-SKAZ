@@ -1,5 +1,7 @@
 import { useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { selectCartCount, selectCartTotal, useCartStore } from '@/stores/cart';
+import { queryKeys } from '@/hooks/queries/queryKeys';
 import { useServerCartMutations, useServerCartQuery } from '@/hooks/queries/useServerCart';
 import { useUserStore } from '@/stores/user';
 import { trackEvent } from '@/lib/analytics';
@@ -50,6 +52,7 @@ export function useCart(): CartFacade {
   const localCount = useCartStore(selectCartCount);
   const localTotal = useCartStore(selectCartTotal);
 
+  const qc = useQueryClient();
   const serverQuery = useServerCartQuery();
   const { addMutation, removeMutation } = useServerCartMutations();
 
@@ -81,14 +84,25 @@ export function useCart(): CartFacade {
   /**
    * Backend `POST /cart` has **additive** semantics ("add N to current line"),
    * not "set total to N". To honor a "set quantity to N" intent from the UI,
-   * we first DELETE the existing cart line and then POST the new quantity.
-   * Two round-trips per click, but it keeps the UI math correct — otherwise
-   * decrementing 5→4 would actually post +4 and balloon the line to 9.
+   * we DELETE the existing cart line and then POST the new quantity.
+   *
+   * The UI updates optimistically (cache patched immediately) so users don't
+   * see the cart flash to empty between DELETE and the follow-up POST. On any
+   * mutation failure we invalidate the query so the next refetch resyncs.
    */
   const setQuantityServer = useCallback(
     async (index: number, dish: Dish, quantity: number) => {
       const item = serverItems[index];
       if (!item?.serverId) return;
+
+      qc.setQueryData<CartItem[]>(queryKeys.cart, (prev) => {
+        if (!prev) return prev;
+        if (quantity <= 0) return prev.filter((_, i) => i !== index);
+        return prev.map((it, i) =>
+          i === index ? { ...it, quantity, price: dish.price * quantity } : it,
+        );
+      });
+
       try {
         await removeMutation.mutateAsync([item.serverId]);
         if (quantity > 0) {
@@ -99,10 +113,10 @@ export function useCart(): CartFacade {
           });
         }
       } catch {
-        // mutation hooks already surface errors; nothing to do here
+        qc.invalidateQueries({ queryKey: queryKeys.cart });
       }
     },
-    [serverItems, addMutation, removeMutation],
+    [serverItems, addMutation, removeMutation, qc],
   );
 
   /** Same delete-then-recreate dance for weighted items (slider adjusts portions). */
@@ -111,6 +125,20 @@ export function useCart(): CartFacade {
       const item = serverItems[index];
       if (!item?.serverId || !dish.baseWeight) return;
       const portions = Math.max(1, Math.round(weight / dish.baseWeight));
+
+      qc.setQueryData<CartItem[]>(queryKeys.cart, (prev) => {
+        if (!prev) return prev;
+        return prev.map((it, i) =>
+          i === index
+            ? {
+                ...it,
+                weight: dish.baseWeight * portions,
+                price: dish.price * portions,
+              }
+            : it,
+        );
+      });
+
       try {
         await removeMutation.mutateAsync([item.serverId]);
         await addMutation.mutateAsync({
@@ -119,19 +147,25 @@ export function useCart(): CartFacade {
           modifiers: item.modifiers.map((id) => ({ modifierId: id })),
         });
       } catch {
-        // see above
+        qc.invalidateQueries({ queryKey: queryKeys.cart });
       }
     },
-    [serverItems, addMutation, removeMutation],
+    [serverItems, addMutation, removeMutation, qc],
   );
 
   const removeAtServer = useCallback(
     (index: number) => {
       const item = serverItems[index];
       if (!item?.serverId) return;
-      removeMutation.mutate([item.serverId]);
+      // Optimistic: drop the row from cache so the row exits immediately
+      qc.setQueryData<CartItem[]>(queryKeys.cart, (prev) =>
+        prev ? prev.filter((_, i) => i !== index) : prev,
+      );
+      removeMutation.mutate([item.serverId], {
+        onError: () => qc.invalidateQueries({ queryKey: queryKeys.cart }),
+      });
     },
-    [serverItems, removeMutation],
+    [serverItems, removeMutation, qc],
   );
 
   const clearServer = useCallback(() => {
